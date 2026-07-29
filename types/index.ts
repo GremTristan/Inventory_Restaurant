@@ -182,6 +182,16 @@ export interface AvatarChatMessage {
   text: string;
 }
 
+// A structured side effect the avatar's tool-calling loop wants the client
+// to perform, independent of what the model says in prose — see
+// lib/ai-avatar-agent.ts. `type` is a discriminant for components consuming
+// AvatarChatResult.clientActions; add new literal members here alongside new
+// tools in the agent's tool registry.
+export interface AvatarClientAction {
+  type: "fill-sales-form";
+  data: ExtractedSalesData;
+}
+
 export type ReminderKind = "daily-sales" | "monthly-inventory";
 
 // Presence of a record means the task for that (siteId, kind, period) is

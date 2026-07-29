@@ -4,6 +4,7 @@ import { getPendingRemindersForRole } from "@/lib/sales-store";
 import { sites } from "@/data/sites";
 import { Sidebar } from "@/components/sidebar";
 import { AvatarWidget } from "@/components/avatar-widget";
+import { SalesFormBridgeProvider } from "@/lib/sales-form-bridge";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -16,16 +17,23 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const aiConfigured = Boolean(process.env.OLLAMA_API_KEY);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background md:flex-row">
-      <Sidebar user={user} hasOwnPendingReminder={hasOwnPendingReminder} />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">{children}</main>
-      {/* Director's siteId is null (sees every site) — the widget's form
-          still needs *some* siteId to pass requireSiteAccess/getSiteById
-          validation, so it falls back to the first site. This has no effect
-          on what the director sees: the director branch of
-          buildContextForUser (lib/ai-avatar-actions.ts) ignores siteId
-          entirely and is always group-wide. */}
-      <AvatarWidget siteId={user.siteId ?? sites[0].id} aiConfigured={aiConfigured} />
-    </div>
+    // Wraps both <main> and AvatarWidget so the globally-mounted widget can
+    // reach into whichever page-specific DailySalesForm is currently
+    // mounted under {children} — see lib/sales-form-bridge.tsx. This layout
+    // itself stays a Server Component; the provider is its own "use client"
+    // boundary.
+    <SalesFormBridgeProvider>
+      <div className="flex min-h-screen flex-col bg-background md:flex-row">
+        <Sidebar user={user} hasOwnPendingReminder={hasOwnPendingReminder} />
+        <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">{children}</main>
+        {/* Director's siteId is null (sees every site) — the widget's form
+            still needs *some* siteId to pass requireSiteAccess/getSiteById
+            validation, so it falls back to the first site. This has no effect
+            on what the director sees: the director branch of
+            buildContextForUser (lib/ai-avatar-actions.ts) ignores siteId
+            entirely and is always group-wide. */}
+        <AvatarWidget siteId={user.siteId ?? sites[0].id} aiConfigured={aiConfigured} />
+      </div>
+    </SalesFormBridgeProvider>
   );
 }

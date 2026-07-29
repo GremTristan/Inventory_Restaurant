@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
-import type { DailySalesEntry, MenuItem, SiteId } from "@/types";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
+import type { DailySalesEntry, ExtractedSalesData, MenuItem, SiteId } from "@/types";
 import { recordDailySalesAction } from "@/lib/sales-actions";
 import { extractSalesFromReceiptAction, type ExtractionResult } from "@/lib/sales-extraction-actions";
 import { compressImage } from "@/lib/image-compression";
+import { useSalesFormBridge } from "@/lib/sales-form-bridge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableCell, TableHead, TableHeaderRow, TableRow } from "@/components/ui/table";
@@ -48,21 +49,36 @@ export function DailySalesForm({
   const extractionFormRef = useRef<HTMLFormElement>(null);
   const [isCompressing, setIsCompressing] = useState(false);
 
+  // Single mutation path for "apply extracted receipt data to the form" —
+  // called both by the button flow below and by the avatar widget via the
+  // registerTarget bridge, so the two never diverge.
+  const applyExtractedData = useCallback(
+    (data: ExtractedSalesData) => {
+      const nextQuantities: Record<string, number> = { ...values.quantities };
+      for (const { menuItemId, quantity } of data.items) {
+        nextQuantities[menuItemId] = quantity;
+      }
+      setValues({
+        cardRevenue: data.cardRevenue ?? values.cardRevenue,
+        netRevenue: data.netRevenue ?? values.netRevenue,
+        quantities: nextQuantities,
+      });
+      setUnmatchedCount(data.unmatchedCount);
+      setFormKey((k) => k + 1);
+    },
+    [values]
+  );
+
+  const { registerTarget } = useSalesFormBridge();
+  useEffect(() => {
+    return registerTarget(siteId, applyExtractedData);
+  }, [siteId, registerTarget, applyExtractedData]);
+
   const [extractionState, extractionFormAction, isExtracting] = useActionState(
     async (_prev: ExtractionResult, formData: FormData) => {
       const result = await extractSalesFromReceiptAction(formData);
       if (result.available && result.data) {
-        const nextQuantities: Record<string, number> = { ...values.quantities };
-        for (const { menuItemId, quantity } of result.data.items) {
-          nextQuantities[menuItemId] = quantity;
-        }
-        setValues({
-          cardRevenue: result.data.cardRevenue ?? values.cardRevenue,
-          netRevenue: result.data.netRevenue ?? values.netRevenue,
-          quantities: nextQuantities,
-        });
-        setUnmatchedCount(result.data.unmatchedCount);
-        setFormKey((k) => k + 1);
+        applyExtractedData(result.data);
       }
       return result;
     },

@@ -6,14 +6,16 @@ import { getDailySalesBySite, getMenuItems, todayPeriod } from "@/lib/sales-stor
 import { getAllUsers } from "@/lib/user-store";
 import { computeInsights } from "@/lib/ai-insights";
 import { saveReceipt, getReceiptsBySiteForUser, getAllReceipts } from "@/lib/ai-avatar-store";
-import { callOllama, type OllamaMessage } from "@/lib/ollama-client";
+import type { OllamaMessage } from "@/lib/ollama-client";
+import { runAgentTurn } from "@/lib/ai-avatar-agent";
 import { sites, getSiteById } from "@/data/sites";
-import type { AvatarChatMessage, Role, SiteId } from "@/types";
+import type { AvatarChatMessage, AvatarClientAction, Role, SiteId } from "@/types";
 
 export interface AvatarChatResult {
   available: boolean;
   reply?: string;
   error?: string;
+  clientActions?: AvatarClientAction[];
 }
 
 // The widget compresses photos client-side before upload (see
@@ -77,9 +79,12 @@ export async function sendAvatarMessageAction(
   const contextText = buildContextForUser(user.role, siteId, user.id);
   const systemPrompt =
     "Tu es l'assistant IA d'un groupe de crêperies. Réponds en français, de façon concise et " +
-    "professionnelle. Si une photo de ticket de caisse est jointe, analyse-la (montant, anomalies " +
-    "visibles, cohérence avec les ventes déclarées) et commente/conseille — ne remplis jamais de " +
-    "formulaire à sa place, contente-toi de commenter et conseiller.\n\n" +
+    "professionnelle. Si une photo de ticket de caisse est jointe, tu peux soit la commenter " +
+    "(montant, anomalies visibles, cohérence avec les ventes déclarées), soit utiliser l'outil " +
+    "fill_sales_form_from_photo si l'utilisateur te demande de remplir/saisir les ventes du jour à " +
+    "partir de cette photo. Si tu n'es pas sûr de son intention, pose une question de clarification " +
+    "avant d'appeler l'outil plutôt que d'agir au hasard — et si tu poses cette question, précise à " +
+    "l'utilisateur qu'il devra rejoindre la photo à sa réponse.\n\n" +
     contextText;
 
   const userContent = text || "Voici une photo du ticket de caisse du jour.";
@@ -89,8 +94,11 @@ export async function sendAvatarMessageAction(
   // direct API testing) — when a photo is attached, fold the system prompt
   // into the same user message instead of sending it as its own role. Pure
   // text turns (no photo) are unaffected and keep the system-message
-  // structure, which also preserves normal multi-turn history handling.
-  const messages: OllamaMessage[] = imageBuffer
+  // structure, which also preserves normal multi-turn history handling. This
+  // shape is fixed once here and reused verbatim by every iteration of
+  // runAgentTurn's internal loop (which only appends assistant/tool
+  // messages), so the bug can't resurface mid-loop.
+  const seedMessages: OllamaMessage[] = imageBuffer
     ? [
         ...history.map((m) => ({ role: m.role, content: m.text })),
         {
@@ -105,25 +113,31 @@ export async function sendAvatarMessageAction(
         { role: "user", content: userContent },
       ];
 
-  const result = await callOllama(messages);
-  if (!result.available) {
+  const agentResult = await runAgentTurn(seedMessages, {
+    siteId,
+    role: user.role,
+    userId: user.id,
+    attachedImage: imageBuffer && imageMediaType ? { buffer: imageBuffer, mediaType: imageMediaType } : null,
+  });
+
+  if (!agentResult.available) {
     return { available: false };
   }
-  if (result.error) {
-    return { available: true, error: result.error };
+  if (agentResult.error) {
+    return { available: true, error: agentResult.error };
   }
 
-  if (imageBuffer && imageMediaType && result.reply) {
+  if (imageBuffer && imageMediaType && agentResult.reply) {
     saveReceipt({
       siteId,
       submittedByUserId: user.id,
       imageBuffer,
       imageMediaType,
-      aiSummary: result.reply,
+      aiSummary: agentResult.reply,
     });
   }
 
-  return { available: true, reply: result.reply };
+  return { available: true, reply: agentResult.reply, clientActions: agentResult.clientActions };
 }
 
 // --- Context assembly: full dump per turn, today-scoped, no tool-use ---

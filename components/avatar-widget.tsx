@@ -1,9 +1,11 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useCallback, useRef, useState } from "react";
 import type { AvatarChatMessage, SiteId } from "@/types";
 import { sendAvatarMessageAction, type AvatarChatResult } from "@/lib/ai-avatar-actions";
 import { compressImage } from "@/lib/image-compression";
+import { useSalesFormBridge } from "@/lib/sales-form-bridge";
+import { useSpeechRecognition } from "@/lib/use-speech-recognition";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -28,8 +30,18 @@ export function AvatarWidget({
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<AvatarChatMessage[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messageInputRef = useRef<HTMLInputElement>(null);
   const [pendingFileName, setPendingFileName] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
+  const { applyToTarget } = useSalesFormBridge();
+
+  const handleTranscript = useCallback((transcript: string) => {
+    if (!messageInputRef.current) return;
+    const existing = messageInputRef.current.value.trim();
+    messageInputRef.current.value = existing ? `${existing} ${transcript}` : transcript;
+  }, []);
+  const { isSupported: speechSupported, isListening, start: startListening } =
+    useSpeechRecognition(handleTranscript);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const original = e.target.files?.[0];
@@ -68,6 +80,24 @@ export function AvatarWidget({
       if (result.reply) {
         setMessages((prev) => [...prev, { role: "assistant", text: result.reply! }]);
       }
+
+      for (const action of result.clientActions ?? []) {
+        if (action.type === "fill-sales-form") {
+          const applied = applyToTarget(siteId, action.data);
+          setMessages((prev) => [
+            ...prev,
+            applied
+              ? { role: "assistant", text: "J'ai rempli le formulaire des ventes du jour avec les données du ticket." }
+              : {
+                  role: "assistant",
+                  text:
+                    "J'ai lu les données du ticket, mais vous n'êtes pas sur la page des ventes du jour de " +
+                    "cet établissement. Ouvrez-la puis redites-le-moi pour que je les applique.",
+                },
+          ]);
+        }
+      }
+
       setPendingFileName(null);
       return result;
     },
@@ -153,7 +183,19 @@ export function AvatarWidget({
               >
                 📷
               </Button>
-              <Input name="message" placeholder="Votre message…" className="flex-1" />
+              {speechSupported && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="px-2"
+                  onClick={startListening}
+                  title="Dicter votre message"
+                  disabled={isPending || isListening}
+                >
+                  {isListening ? "🔴" : "🎙️"}
+                </Button>
+              )}
+              <Input ref={messageInputRef} name="message" placeholder="Votre message…" className="flex-1" />
               <Button
                 type="submit"
                 variant="primary"
