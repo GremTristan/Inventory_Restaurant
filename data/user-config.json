@@ -1,0 +1,95 @@
+{
+  "users": [
+    {
+      "id": "manager-bdf",
+      "name": "Alice Dubois",
+      "role": "manager",
+      "siteId": "bdf",
+      "passwordHash": "$2b$10$sSzbSt78zNl6ollVThCzKeq49j/N4xNukROvVPqSpn96FS/xDnS5m"
+    },
+    {
+      "id": "manager-carouge",
+      "name": "Marc Fontaine",
+      "role": "manager",
+      "siteId": "carouge",
+      "passwordHash": "$2b$10$/UJqd/Sb.ses2r7q2ZS9uuJbJ8pzxSa6hqgMnhz526y8dIuuTzHPO"
+    },
+    {
+      "id": "manager-molard",
+      "name": "Sophie Berger",
+      "role": "manager",
+      "siteId": "molard",
+      "passwordHash": "$2b$10$TL9FAHb2tTHufw8nPEkpCuRaugQOG7bhhtfuP71354HJYRG9P4buK"
+    },
+    {
+      "id": "manager-vevey",
+      "name": "Julien Rey",
+      "role": "manager",
+      "siteId": "vevey",
+      "passwordHash": "$2b$10$pu1wwdBQDYLzQ1BwA.vt3Oeibn38QQ6JigP9xoi24eUToXc5ARXsG"
+    },
+    {
+      "id": "manager-philosophe",
+      "name": "Camille Bovet",
+      "role": "manager",
+      "siteId": "philosophe",
+      "passwordHash": "$2b$10$ndUJRUs7Lctkxr1zDkHE0Opz114lFKoe4oS45eXdAgN8D3IkegSSe"
+    },
+    {
+      "id": "manager-hoshy",
+      "name": "Thomas Gay",
+      "role": "manager",
+      "siteId": "hoshy",
+      "passwordHash": "$2b$10$SyLp7OlJ626m2UTVkhWz3uw13TtQivSfEaKxA7KS2Gyn8OngiAAX2"
+    },
+    {
+      "id": "waiter-bdf",
+      "name": "Léa Moreau",
+      "role": "waiter",
+      "siteId": "bdf",
+      "passwordHash": "$2b$10$/ggLHenOyunRqa9UkWPc6eb/Qf9g1DfFAmHELi8uvzurBaZHjS/I."
+    },
+    {
+      "id": "waiter-carouge",
+      "name": "Nabil Haddad",
+      "role": "waiter",
+      "siteId": "carouge",
+      "passwordHash": "$2b$10$j4r3J9oeT99jTNmHMyn4oetaF6nkvSYfeo6CGDkz5tcfvn/rQ8c6u"
+    },
+    {
+      "id": "waiter-molard",
+      "name": "Chloé Rossier",
+      "role": "waiter",
+      "siteId": "molard",
+      "passwordHash": "$2b$10$AiZSdnjAgUrnmLswXQVWhOEUrzrcvJyy2wTOrHMKmq6xKeiKYFKnW"
+    },
+    {
+      "id": "waiter-vevey",
+      "name": "Hugo Currat",
+      "role": "waiter",
+      "siteId": "vevey",
+      "passwordHash": "$2b$10$W3bO8xmZ0z6qzsrn6QSfle0FN8OEGsXJkDg6PH2C8jbA2M6Q4XYIe"
+    },
+    {
+      "id": "waiter-philosophe",
+      "name": "Inès Zbinden",
+      "role": "waiter",
+      "siteId": "philosophe",
+      "passwordHash": "$2b$10$ac1cVNQ79RSTyc7IUw/4TeFd8HMOUJgjGkYQ03QhYcN9CpOJZWjZu"
+    },
+    {
+      "id": "waiter-hoshy",
+      "name": "Maxime Ducret",
+      "role": "waiter",
+      "siteId": "hoshy",
+      "passwordHash": "$2b$10$NaXRS0X.lkXyc2puxwar6OW3jvE2bQSphi/Qqli9zz7/fYD919DRi"
+    },
+    {
+      "id": "director-1",
+      "name": "Julien Perret",
+      "role": "director",
+      "siteId": null,
+      "passwordHash": "$2b$10$fmm.qUcDEoL9v9EASTShQOGpHDYURYDDBWvx0LkRBTlT35zAPVwEq"
+    }
+  ]
+}

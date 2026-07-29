@@ -1,0 +1,62 @@
+import type { MenuItem } from "@/types";
+
+// Sellable products, scoped per site — each établissement has its own
+// crêpes and drinks. Editable at runtime by the director from
+// /dashboard/menu — this is only the starting seed, identical across sites
+// to keep the demo data simple; directors are expected to differentiate
+// each site's menu afterward.
+export const initialMenu: MenuItem[] = [
+  // BDF
+  { id: "bdf-menu-1", siteId: "bdf", name: "Crêpe Nutella" },
+  { id: "bdf-menu-2", siteId: "bdf", name: "Crêpe jambon-fromage" },
+  { id: "bdf-menu-3", siteId: "bdf", name: "Crêpe sucre-citron" },
+  { id: "bdf-menu-4", siteId: "bdf", name: "Galette complète" },
+  { id: "bdf-menu-5", siteId: "bdf", name: "Coca-Cola" },
+  { id: "bdf-menu-6", siteId: "bdf", name: "Cidre brut" },
+  { id: "bdf-menu-7", siteId: "bdf", name: "Café" },
+
+  // Carouge
+  { id: "car-menu-1", siteId: "carouge", name: "Crêpe Nutella" },
+  { id: "car-menu-2", siteId: "carouge", name: "Crêpe jambon-fromage" },
+  { id: "car-menu-3", siteId: "carouge", name: "Crêpe sucre-citron" },
+  { id: "car-menu-4", siteId: "carouge", name: "Galette complète" },
+  { id: "car-menu-5", siteId: "carouge", name: "Coca-Cola" },
+  { id: "car-menu-6", siteId: "carouge", name: "Cidre brut" },
+  { id: "car-menu-7", siteId: "carouge", name: "Café" },
+
+  // Molard
+  { id: "mol-menu-1", siteId: "molard", name: "Crêpe Nutella" },
+  { id: "mol-menu-2", siteId: "molard", name: "Crêpe jambon-fromage" },
+  { id: "mol-menu-3", siteId: "molard", name: "Crêpe sucre-citron" },
+  { id: "mol-menu-4", siteId: "molard", name: "Galette complète" },
+  { id: "mol-menu-5", siteId: "molard", name: "Coca-Cola" },
+  { id: "mol-menu-6", siteId: "molard", name: "Cidre brut" },
+  { id: "mol-menu-7", siteId: "molard", name: "Café" },
+
+  // Vevey
+  { id: "vev-menu-1", siteId: "vevey", name: "Crêpe Nutella" },
+  { id: "vev-menu-2", siteId: "vevey", name: "Crêpe jambon-fromage" },
+  { id: "vev-menu-3", siteId: "vevey", name: "Crêpe sucre-citron" },
+  { id: "vev-menu-4", siteId: "vevey", name: "Galette complète" },
+  { id: "vev-menu-5", siteId: "vevey", name: "Coca-Cola" },
+  { id: "vev-menu-6", siteId: "vevey", name: "Cidre brut" },
+  { id: "vev-menu-7", siteId: "vevey", name: "Café" },
+
+  // Philosophe
+  { id: "phi-menu-1", siteId: "philosophe", name: "Crêpe Nutella" },
+  { id: "phi-menu-2", siteId: "philosophe", name: "Crêpe jambon-fromage" },
+  { id: "phi-menu-3", siteId: "philosophe", name: "Crêpe sucre-citron" },
+  { id: "phi-menu-4", siteId: "philosophe", name: "Galette complète" },
+  { id: "phi-menu-5", siteId: "philosophe", name: "Coca-Cola" },
+  { id: "phi-menu-6", siteId: "philosophe", name: "Cidre brut" },
+  { id: "phi-menu-7", siteId: "philosophe", name: "Café" },
+
+  // Hoshy
+  { id: "hos-menu-1", siteId: "hoshy", name: "Crêpe Nutella" },
+  { id: "hos-menu-2", siteId: "hoshy", name: "Crêpe jambon-fromage" },
+  { id: "hos-menu-3", siteId: "hoshy", name: "Crêpe sucre-citron" },
+  { id: "hos-menu-4", siteId: "hoshy", name: "Galette complète" },
+  { id: "hos-menu-5", siteId: "hoshy", name: "Coca-Cola" },
+  { id: "hos-menu-6", siteId: "hoshy", name: "Cidre brut" },
+  { id: "hos-menu-7", siteId: "hoshy", name: "Café" },
+];

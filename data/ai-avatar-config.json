@@ -1,0 +1,40 @@
+{
+  "receipts": [
+    {
+      "id": "4fac44a0-5c5f-4948-9961-3b5d89b0b7e4",
+      "siteId": "bdf",
+      "submittedByUserId": "waiter-bdf",
+      "submittedAt": "2026-07-29T07:32:13.308Z",
+      "imagePath": "bdf/4fac44a0-5c5f-4948-9961-3b5d89b0b7e4.png",
+      "imageMediaType": "image/png",
+      "aiSummary": "L'image transmise est totalement noire et illisible. Je ne peux donc pas analyser le ticket. \n\nMerci de renvoyer une photo claire et bien éclairée pour que je puisse vérifier le montant et la cohérence des ventes."
+    },
+    {
+      "id": "b787367a-37a1-4fbc-a655-a11b8b483722",
+      "siteId": "bdf",
+      "submittedByUserId": "waiter-bdf",
+      "submittedAt": "2026-07-29T07:52:04.024Z",
+      "imagePath": "bdf/b787367a-37a1-4fbc-a655-a11b8b483722.jpg",
+      "imageMediaType": "image/jpeg",
+      "aiSummary": "L'image transmise est illisible (bruit numérique). Je ne peux pas analyser le montant ni la cohérence des ventes.\n\nMerci de renvoyer une photo claire et bien éclairée du ticket de caisse."
+    },
+    {
+      "id": "931589be-34ba-42ab-bab7-a398b2ea6275",
+      "siteId": "bdf",
+      "submittedByUserId": "waiter-bdf",
+      "submittedAt": "2026-07-29T07:53:41.767Z",
+      "imagePath": "bdf/931589be-34ba-42ab-bab7-a398b2ea6275.jpg",
+      "imageMediaType": "image/jpeg",
+      "aiSummary": "L'image transmise est illisible (bruit numérique). Je ne peux pas analyser le montant, les produits vendus, ni la cohérence avec vos stocks.\n\nMerci de renvoyer une photo claire et bien éclairée du ticket de caisse."
+    },
+    {
+      "id": "c6027155-bab0-40bf-ba61-a4054fd6ee5b",
+      "siteId": "molard",
+      "submittedByUserId": "waiter-molard",
+      "submittedAt": "2026-07-29T08:08:18.710Z",
+      "imagePath": "molard/c6027155-bab0-40bf-ba61-a4054fd6ee5b.jpg",
+      "imageMediaType": "image/jpeg",
+      "aiSummary": "Analyse du rapport de caisse pour l'établissement Molard :\n\n**Données financières :**\n*   **CA TTC Net :** 3 192,76 CHF\n*   **Total Encaissements :** 3 192,75 CHF (écart minime de 0,01 CHF)\n*   **Répartition :** Majorité des paiements par carte (3 030,45 CHF) et espèces (162,30 CHF).\n\n**Observations :**\n*   **Anomalies :** Aucune anomalie majeure détectée. Les remises appliquées s'élèvent à 7,54 CHF.\n*   **Cohérence :** Le montant total correspond aux encaissements. Cependant, les ventes détaillées par produit ne sont pas visibles sur ce rapport global, je ne peux donc pas vérifier la cohérence avec l'inventaire du cidre.\n\n**Conseils :**\n1.  Veuillez saisir les ventes du jour dans le système pour mettre à jour l'inventaire.\n2.  Vérifiez la nature des remises accordées pour vous assurer qu'elles respectent la politique commerciale."
+    }
+  ]
+}
