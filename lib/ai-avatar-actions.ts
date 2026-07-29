@@ -82,15 +82,28 @@ export async function sendAvatarMessageAction(
     "formulaire à sa place, contente-toi de commenter et conseiller.\n\n" +
     contextText;
 
-  const messages: OllamaMessage[] = [
-    { role: "system", content: systemPrompt },
-    ...history.map((m) => ({ role: m.role, content: m.text })),
-    {
-      role: "user",
-      content: text || "Voici une photo du ticket de caisse du jour.",
-      ...(imageBuffer ? { images: [imageBuffer.toString("base64")] } : {}),
-    },
-  ];
+  const userContent = text || "Voici une photo du ticket de caisse du jour.";
+
+  // A separate `system` message combined with an image on the user message
+  // reproducibly stalls gemma4:31b-cloud for several minutes (confirmed via
+  // direct API testing) — when a photo is attached, fold the system prompt
+  // into the same user message instead of sending it as its own role. Pure
+  // text turns (no photo) are unaffected and keep the system-message
+  // structure, which also preserves normal multi-turn history handling.
+  const messages: OllamaMessage[] = imageBuffer
+    ? [
+        ...history.map((m) => ({ role: m.role, content: m.text })),
+        {
+          role: "user",
+          content: `${systemPrompt}\n\n${userContent}`,
+          images: [imageBuffer.toString("base64")],
+        },
+      ]
+    : [
+        { role: "system", content: systemPrompt },
+        ...history.map((m) => ({ role: m.role, content: m.text })),
+        { role: "user", content: userContent },
+      ];
 
   const result = await callOllama(messages);
   if (!result.available) {
