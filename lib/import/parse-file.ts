@@ -95,18 +95,23 @@ async function parseXlsx(buffer: Buffer): Promise<ParseFileResult> {
     return { available: true, error: "Le fichier Excel est vide ou n'a pas de données." };
   }
 
-  const headerRow = sheet.getRow(1);
+  const headerRowNumber = findHeaderRowNumber(sheet);
+  if (headerRowNumber === null) {
+    return { available: true, error: "Impossible de trouver une ligne d'en-têtes dans ce fichier Excel." };
+  }
+
+  const headerRow = sheet.getRow(headerRowNumber);
   const headers: string[] = [];
   headerRow.eachCell({ includeEmpty: false }, (cell, colNumber) => {
     headers[colNumber - 1] = String(cell.value ?? "").trim();
   });
   const filteredHeaders = headers.filter(Boolean);
   if (filteredHeaders.length === 0) {
-    return { available: true, error: "Le fichier Excel n'a pas d'en-têtes en première ligne." };
+    return { available: true, error: "Le fichier Excel n'a pas d'en-têtes exploitables." };
   }
 
   const rows: Record<string, string>[] = [];
-  for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber++) {
+  for (let rowNumber = headerRowNumber + 1; rowNumber <= sheet.rowCount; rowNumber++) {
     const row = sheet.getRow(rowNumber);
     if (row.cellCount === 0) continue;
     const record: Record<string, string> = {};
@@ -126,6 +131,42 @@ async function parseXlsx(buffer: Buffer): Promise<ParseFileResult> {
   }
 
   return { available: true, table: { headers: filteredHeaders, rows } };
+}
+
+const MAX_HEADER_SCAN_ROWS = 15;
+
+// Real-world exports rarely put headers on row 1 — a title row, a blank
+// spacer row, or a merged banner cell above the real header row are all
+// common. Scans the first MAX_HEADER_SCAN_ROWS rows and picks the one that
+// looks most like a header: mostly non-empty text cells, immediately
+// followed by a row that actually has data under most of those same
+// columns. A lone title cell (row with only 1 populated cell) or a blank
+// row never wins even if nothing else qualifies.
+function findHeaderRowNumber(sheet: ExcelJS.Worksheet): number | null {
+  const lastCandidate = Math.min(sheet.rowCount, MAX_HEADER_SCAN_ROWS);
+  let best: { rowNumber: number; score: number } | null = null;
+
+  for (let rowNumber = 1; rowNumber <= lastCandidate; rowNumber++) {
+    const row = sheet.getRow(rowNumber);
+    const textCells: number[] = [];
+    row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+      const value = cellToString(cell.value).trim();
+      if (value !== "" && Number.isNaN(Number(value))) textCells.push(colNumber);
+    });
+    if (textCells.length < 2) continue;
+
+    const nextRow = sheet.getRow(rowNumber + 1);
+    let columnsWithDataBelow = 0;
+    for (const col of textCells) {
+      if (cellToString(nextRow.getCell(col).value).trim() !== "") columnsWithDataBelow++;
+    }
+    if (columnsWithDataBelow === 0) continue;
+
+    const score = textCells.length + columnsWithDataBelow;
+    if (!best || score > best.score) best = { rowNumber, score };
+  }
+
+  return best?.rowNumber ?? null;
 }
 
 function cellToString(value: ExcelJS.CellValue): string {
