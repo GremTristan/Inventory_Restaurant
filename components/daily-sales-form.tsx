@@ -8,7 +8,8 @@ import { compressImage } from "@/lib/image-compression";
 import { useSalesFormBridge } from "@/lib/sales-form-bridge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Table, TableCell, TableHead, TableHeaderRow, TableRow } from "@/components/ui/table";
+import { TableCell, TableHead, TableHeaderRow, TableRow } from "@/components/ui/table";
+import { ResponsiveDataList } from "@/components/ui/responsive-data-list";
 
 const initialExtractionState: ExtractionResult = { available: true };
 
@@ -109,14 +110,15 @@ export function DailySalesForm({
 
   if (submitted) {
     return (
-      <div className="flex flex-col items-start gap-3 rounded-md border border-border bg-muted px-4 py-6 text-center sm:text-left">
+      <div className="flex flex-col items-start gap-3 rounded-card bg-muted/60 px-4 py-6 text-center sm:text-left">
         <p className="text-sm font-medium text-foreground">
           Merci d&apos;avoir rempli les informations. À demain.
         </p>
         <Button
           type="button"
           variant="ghost"
-          className="px-0 text-xs text-accent hover:text-accent-hover"
+          size="sm"
+          className="px-0 text-accent hover:text-accent-hover"
           onClick={() => setSubmitted(false)}
         >
           Modifier ma saisie
@@ -130,7 +132,7 @@ export function DailySalesForm({
       <form
         ref={extractionFormRef}
         action={extractionFormAction}
-        className="flex flex-col gap-2 rounded-md border border-dashed border-border bg-muted/40 p-3"
+        className="flex flex-col gap-2 rounded-card border border-dashed border-border bg-muted/40 p-4"
       >
         <input type="hidden" name="siteId" value={siteId} />
         <input
@@ -146,7 +148,7 @@ export function DailySalesForm({
           <Button
             type="button"
             variant="secondary"
-            className="text-xs"
+            size="lg"
             onClick={() => fileInputRef.current?.click()}
             disabled={isCompressing || isExtracting}
           >
@@ -181,12 +183,12 @@ export function DailySalesForm({
       >
         <input type="hidden" name="siteId" value={siteId} />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">Montant CB</label>
-            <div className="flex items-center gap-1">
-              <span className="text-muted-foreground">CHF</span>
-              <Input
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-card bg-muted/60 p-4">
+            <label className="text-xs font-semibold text-muted-foreground">Montant CB</label>
+            <div className="mt-1 flex items-baseline gap-1">
+              <span className="text-lg font-bold text-muted-foreground">CHF</span>
+              <input
                 name="cardRevenue"
                 type="number"
                 min={0}
@@ -196,16 +198,15 @@ export function DailySalesForm({
                   setValues((v) => ({ ...v, cardRevenue: e.target.valueAsNumber || 0 }))
                 }
                 required
+                className="w-full min-w-0 bg-transparent text-2xl font-bold tabular-nums text-metric-card-payment focus:outline-none"
               />
             </div>
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
-              Chiffre d&apos;affaires net
-            </label>
-            <div className="flex items-center gap-1">
-              <span className="text-muted-foreground">CHF</span>
-              <Input
+          <div className="rounded-card bg-muted/60 p-4">
+            <label className="text-xs font-semibold text-muted-foreground">Chiffre d&apos;affaires net</label>
+            <div className="mt-1 flex items-baseline gap-1">
+              <span className="text-lg font-bold text-muted-foreground">CHF</span>
+              <input
                 name="netRevenue"
                 type="number"
                 min={0}
@@ -215,52 +216,62 @@ export function DailySalesForm({
                   setValues((v) => ({ ...v, netRevenue: e.target.valueAsNumber || 0 }))
                 }
                 required
+                className="w-full min-w-0 bg-transparent text-2xl font-bold tabular-nums text-foreground focus:outline-none"
               />
             </div>
           </div>
-          <div>
-            <span className="mb-1 block text-xs font-medium text-muted-foreground">Espèces</span>
-            <p className="rounded-md border border-transparent px-3 py-1.5 text-sm tabular-nums text-foreground">
-              {cashRevenue.toFixed(2)} CHF
+          <div className="rounded-card bg-muted/60 p-4">
+            <span className="text-xs font-semibold text-muted-foreground">Espèces</span>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-metric-cash-payment">
+              {cashRevenue.toFixed(2)} <span className="text-lg">CHF</span>
             </p>
           </div>
         </div>
 
-        <Table>
-          <thead>
+        <ResponsiveDataList
+          items={menu}
+          getKey={(item) => item.id}
+          tableHead={
             <TableHeaderRow>
               <TableHead>Produit</TableHead>
               <TableHead>Quantité vendue</TableHead>
             </TableHeaderRow>
-          </thead>
-          <tbody>
-            {menu.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell className="font-medium text-foreground">{item.name}</TableCell>
-                <TableCell>
-                  <Input
-                    name={`quantities[${item.id}]`}
-                    type="number"
-                    min={0}
-                    step="1"
-                    defaultValue={values.quantities[item.id] ?? 0}
-                    className="w-24 tabular-nums"
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-            {menu.length === 0 && (
-              <tr>
-                <TableCell colSpan={2} className="py-3 text-sm text-muted-foreground">
-                  Aucun produit dans le menu pour le moment.
-                </TableCell>
-              </tr>
-            )}
-          </tbody>
-        </Table>
+          }
+          renderRow={(item) => (
+            <TableRow key={item.id}>
+              <TableCell className="font-medium text-foreground">{item.name}</TableCell>
+              <TableCell>
+                <Input
+                  name={`quantities[${item.id}]`}
+                  type="number"
+                  min={0}
+                  step="1"
+                  defaultValue={values.quantities[item.id] ?? 0}
+                  className="w-24 tabular-nums"
+                />
+              </TableCell>
+            </TableRow>
+          )}
+          renderCard={(item) => (
+            <div className="flex items-center justify-between rounded-card bg-card p-4 shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)]">
+              <p className="text-sm font-semibold text-foreground">{item.name}</p>
+              <Input
+                name={`quantities[${item.id}]`}
+                type="number"
+                min={0}
+                step="1"
+                defaultValue={values.quantities[item.id] ?? 0}
+                className="w-20 text-center tabular-nums"
+              />
+            </div>
+          )}
+        />
+        {menu.length === 0 && (
+          <p className="text-sm text-muted-foreground">Aucun produit dans le menu pour le moment.</p>
+        )}
 
         <div className="flex items-center gap-3">
-          <Button type="submit" variant="primary" className="px-4 py-2 text-sm">
+          <Button type="submit" variant="primary" size="lg">
             {existingEntry ? "Mettre à jour la journée" : "Valider la journée"}
           </Button>
         </div>

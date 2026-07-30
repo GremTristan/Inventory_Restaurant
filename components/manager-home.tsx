@@ -11,7 +11,7 @@ export function ManagerHome({ siteId, accessGranted }: { siteId: SiteId; accessG
   if (!accessGranted) {
     return (
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3.5 opacity-60">
+        <div className="flex items-center justify-between rounded-card bg-card px-4 py-3.5 opacity-60 shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)]">
           <div>
             <p className="text-sm font-semibold text-foreground">Inventaire</p>
             <p className="mt-0.5 text-xs text-muted-foreground">

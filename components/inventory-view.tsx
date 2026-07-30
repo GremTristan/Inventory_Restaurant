@@ -41,14 +41,14 @@ export function InventoryView({
     <div className="space-y-4">
       {isDirector && (
         <div className="flex items-center justify-between">
-          <div className="inline-flex rounded-md border border-border bg-card p-0.5">
+          <div className="inline-flex rounded-pill bg-muted p-1">
             {ZONE_ORDER.map((z) => (
               <button
                 key={z}
                 type="button"
                 onClick={() => setZone(z)}
                 className={cn(
-                  "rounded-sm px-3 py-1.5 text-sm font-medium transition-colors",
+                  "rounded-pill px-4 py-1.5 text-sm font-medium transition-colors",
                   zone === z
                     ? "bg-accent text-accent-foreground"
                     : "text-muted-foreground hover:text-foreground"

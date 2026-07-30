@@ -35,7 +35,7 @@ export default async function LoginSitePage({
   );
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4 sm:px-6">
       <Clock className="text-center text-sm" />
       <Card className="w-full max-w-sm">
         <CardHeader>

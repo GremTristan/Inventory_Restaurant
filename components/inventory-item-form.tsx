@@ -20,7 +20,7 @@ export function InventoryItemForm() {
         await addInventoryItemAction(formData);
         formRef.current?.reset();
       }}
-      className="grid grid-cols-1 gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-7"
+      className="grid grid-cols-1 gap-3 rounded-card bg-muted/60 p-4 sm:grid-cols-2 sm:p-6 lg:grid-cols-7"
     >
       <Select name="siteId" defaultValue={sites[0].id} required>
         {sites.map((site) => (
@@ -67,7 +67,7 @@ export function InventoryItemForm() {
           <span className="text-muted-foreground">CHF</span>
           <Input name="unitPrice" type="number" min={0} step="0.05" placeholder="Prix unitaire" defaultValue={0} required />
         </div>
-        <Button type="submit" variant="primary" className="px-3 py-1.5 text-xs">
+        <Button type="submit" variant="primary" size="sm">
           Ajouter l&apos;article
         </Button>
       </div>

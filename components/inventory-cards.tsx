@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { InventoryItem, SiteId, Supplier } from "@/types";
 import { CATEGORY_LABELS } from "@/types";
 import { totalStockValue, formatCHF, groupByCategory } from "@/lib/inventory";
-import { CategoryDot } from "@/components/ui/category-dot";
+import { CategoryIcon } from "@/components/ui/category-dot";
 import { updateInventoryItemAction } from "@/lib/inventory-actions";
 import { useDebouncedCallback } from "@/lib/use-debounced-callback";
 
@@ -46,8 +46,8 @@ export function InventoryCards({
     <div className="space-y-8">
       {categoryGroups.map(({ category, items: categoryItems }) => (
         <section key={category}>
-          <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-foreground">
-            <CategoryDot category={category} />
+          <h2 className="mb-3 flex items-center gap-3 text-base font-semibold text-foreground">
+            <CategoryIcon category={category} size="sm" />
             {CATEGORY_LABELS[category]}
           </h2>
           <div className="flex flex-col gap-3">
@@ -83,7 +83,7 @@ function InventoryCard({
   onQuantityChange: (id: string, quantity: number) => void;
 }) {
   return (
-    <details className="group rounded-xl border border-border bg-card open:pb-4">
+    <details className="group rounded-card bg-card shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)] open:pb-4">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 [&::-webkit-details-marker]:hidden">
         <span className="text-lg font-medium text-foreground">
           {item.name}
@@ -138,7 +138,7 @@ function Stepper({
           e.preventDefault();
           onDecrement();
         }}
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-black/[0.04] text-2xl font-medium text-foreground transition-colors active:bg-black/10 disabled:opacity-40 disabled:pointer-events-none"
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted text-2xl font-bold text-foreground transition-colors active:bg-border disabled:opacity-40 disabled:pointer-events-none"
       >
         −
       </button>
@@ -160,7 +160,7 @@ function Stepper({
           e.preventDefault();
           onIncrement();
         }}
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-black/[0.04] text-2xl font-medium text-foreground transition-colors active:bg-black/10"
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted text-2xl font-bold text-foreground transition-colors active:bg-border"
       >
         +
       </button>

@@ -45,7 +45,7 @@ export default async function InventoryPage({
       <>
         <RemindersBanner siteId={site.id as SiteId} pending={pendingForRole} />
         <div>
-          <h1 className="text-xl font-semibold text-foreground">{site.name}</h1>
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">{site.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">Que voulez-vous faire aujourd&apos;hui ?</p>
         </div>
         <div className="mt-6">
@@ -60,7 +60,7 @@ export default async function InventoryPage({
       <>
         <RemindersBanner siteId={site.id as SiteId} pending={pendingForRole} />
         <div>
-          <h1 className="text-xl font-semibold text-foreground">{site.name}</h1>
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">{site.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">Que voulez-vous faire aujourd&apos;hui ?</p>
         </div>
         <div className="mt-6">
@@ -96,7 +96,7 @@ export default async function InventoryPage({
       {siteSelector}
       <RemindersBanner siteId={site.id as SiteId} pending={pendingForRole} />
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Inventaire — {site.name}</h1>
+        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Inventaire — {site.name}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {isDirector
             ? "Modifiez les quantités et les prix unitaires ; la valeur du stock se recalcule automatiquement."

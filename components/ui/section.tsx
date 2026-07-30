@@ -1,3 +1,7 @@
+// Health apps use a plain text heading above a card group, never a
+// bordered card-with-a-colored-header-strip — the old bordered bg-muted
+// header band was the most "admin panel" element in the primitive layer.
+// Props are unchanged so every call site keeps working with zero edits.
 export function Section({
   title,
   description,
@@ -8,12 +12,12 @@ export function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-xl border border-border bg-card">
-      <div className="border-b border-border bg-muted px-5 py-4">
-        <h2 className="text-base font-semibold text-foreground">{title}</h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+    <section>
+      <h2 className="text-lg font-bold text-foreground sm:text-xl">{title}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      <div className="mt-4 rounded-card bg-card p-4 shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)] sm:p-6">
+        {children}
       </div>
-      <div className="p-5">{children}</div>
     </section>
   );
 }

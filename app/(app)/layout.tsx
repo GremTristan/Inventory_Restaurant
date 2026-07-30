@@ -25,7 +25,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <SalesFormBridgeProvider>
       <div className="flex min-h-screen flex-col bg-background md:flex-row">
         <Sidebar user={user} hasOwnPendingReminder={hasOwnPendingReminder} />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">{children}</main>
+        {/* pb-24 reserves room for the fixed mobile bottom tab bar (see
+            sidebar.tsx); md:pb-8 removes that reservation once the desktop
+            sidebar takes over and the bottom bar disappears via md:hidden. */}
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-24 sm:px-6 sm:py-8 md:pb-8">{children}</main>
         {/* Director's siteId is null (sees every site) — the widget's form
             still needs *some* siteId to pass requireSiteAccess/getSiteById
             validation, so it falls back to the first site. This has no effect

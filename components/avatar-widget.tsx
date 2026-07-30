@@ -120,7 +120,7 @@ export function AvatarWidget({
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
       {open && (
-        <div className="flex max-h-[70vh] w-[360px] max-w-[90vw] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+        <div className="flex max-h-[70vh] w-[360px] max-w-[90vw] flex-col overflow-hidden rounded-card-lg bg-card shadow-xl">
           <div className="flex items-center justify-between border-b border-border bg-muted px-4 py-3">
             <span className="text-sm font-semibold text-foreground">Assistant IA</span>
             <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setOpen(false)}>

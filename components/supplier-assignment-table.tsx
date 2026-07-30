@@ -7,7 +7,7 @@ import { getSiteById } from "@/data/sites";
 import { updateItemSupplierAction } from "@/lib/supplier-actions";
 import { setItemCategoryAction } from "@/lib/inventory-actions";
 import { Select } from "@/components/ui/select";
-import { Table, TableCell, TableHead, TableHeaderRow, TableRow } from "@/components/ui/table";
+import { TableCell, TableHead, TableHeaderRow, TableRow } from "@/components/ui/table";
 
 export function SupplierAssignmentTable({
   items,
@@ -20,22 +20,28 @@ export function SupplierAssignmentTable({
     return <p className="text-sm text-muted-foreground">Aucun article pour le moment.</p>;
   }
 
+  // Two independent per-row <Select> controls don't translate naturally to
+  // a card list (unlike ItemsTable's plain number fields) — kept as a
+  // desktop-shaped table on every viewport, horizontally scrollable on
+  // narrow screens, same deliberate choice as VisibilityTable.
   return (
-    <Table>
-      <thead>
-        <TableHeaderRow>
-          <TableHead>Article</TableHead>
-          <TableHead>Établissement</TableHead>
-          <TableHead>Fournisseur</TableHead>
-          <TableHead>Catégorie</TableHead>
-        </TableHeaderRow>
-      </thead>
-      <tbody>
-        {items.map((item) => (
-          <ItemRow key={item.id} item={item} suppliers={suppliers} />
-        ))}
-      </tbody>
-    </Table>
+    <div className="overflow-x-auto rounded-card bg-card shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)]">
+      <table className="w-full text-sm">
+        <thead>
+          <TableHeaderRow>
+            <TableHead>Article</TableHead>
+            <TableHead>Établissement</TableHead>
+            <TableHead>Fournisseur</TableHead>
+            <TableHead>Catégorie</TableHead>
+          </TableHeaderRow>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <ItemRow key={item.id} item={item} suppliers={suppliers} />
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

@@ -51,17 +51,15 @@ export const CATEGORY_LABELS: Record<Category, string> = {
 export const CATEGORY_ORDER: Category[] = ["frais", "sec", "sucre", "viande", "boissons"];
 
 // Category color identity: a small dot + left-border accent only — the
-// table body itself always stays neutral. Mid-saturated tones chosen to
-// carry real weight on a white background (the previous dark-theme shades
-// read as too pale here), while staying mutually distinguishable and clear
-// of the app's own accent blue (#007aff), which sits closer to violet than
-// any of these five hues.
+// table body itself always stays neutral. Values point at the
+// --category-* tokens in app/globals.css (same hues as before, now
+// tokenized) so icon containers/rings/charts share one source of truth.
 export const CATEGORY_COLORS: Record<Category, { dot: string; border: string }> = {
-  frais: { dot: "bg-sky-500", border: "border-sky-500" },
-  sec: { dot: "bg-amber-500", border: "border-amber-500" },
-  sucre: { dot: "bg-pink-500", border: "border-pink-500" },
-  viande: { dot: "bg-rose-600", border: "border-rose-600" },
-  boissons: { dot: "bg-teal-600", border: "border-teal-600" },
+  frais: { dot: "bg-category-frais", border: "border-category-frais" },
+  sec: { dot: "bg-category-sec", border: "border-category-sec" },
+  sucre: { dot: "bg-category-sucre", border: "border-category-sucre" },
+  viande: { dot: "bg-category-viande", border: "border-category-viande" },
+  boissons: { dot: "bg-category-boissons", border: "border-category-boissons" },
 };
 
 // Physical area an article is stocked in — separate axis from Category

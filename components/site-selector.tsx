@@ -57,7 +57,7 @@ export function SiteSelector({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-border bg-muted/50 px-4 py-2.5">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-card bg-muted/60 px-4 py-3">
         <div className="flex items-center gap-2">
           <label className="text-xs font-medium text-muted-foreground" htmlFor="site-selector">
             Établissement
@@ -66,7 +66,7 @@ export function SiteSelector({
             id="site-selector"
             value={site.siteId}
             onChange={(e) => handleChange(e.target.value as SiteId)}
-            className="rounded-md border border-border bg-card px-2.5 py-1 text-sm font-medium text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+            className="rounded-control border border-transparent bg-card px-3 py-1.5 text-sm font-medium text-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40"
           >
             {sitesHealth.map((s) => (
               <option key={s.siteId} value={s.siteId}>
@@ -127,7 +127,7 @@ export function SiteSelector({
 
           <form
             action={setInventoryAccessAction}
-            className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3"
+            className="flex items-center justify-between rounded-card bg-card px-4 py-3 shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)]"
           >
             <input type="hidden" name="siteId" value={site.siteId} />
             <input type="hidden" name="granted" value={String(!accessGranted)} />

@@ -16,7 +16,7 @@ export default async function SuppliersPage() {
 
   return (
     <>
-      <h1 className="text-xl font-semibold text-foreground">Fournisseurs</h1>
+      <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Fournisseurs</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Gérez la liste des fournisseurs et assignez-en un à chaque article, site par site.
       </p>

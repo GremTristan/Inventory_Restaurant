@@ -12,7 +12,8 @@ import { getAllInventoryItems } from "@/lib/inventory-store";
 import { DailySalesForm } from "@/components/daily-sales-form";
 import { RevenueSparkline } from "@/components/revenue-sparkline";
 import { Section } from "@/components/ui/section";
-import { Table, TableCell, TableHead, TableHeaderRow, TableRow } from "@/components/ui/table";
+import { TableCell, TableHead, TableHeaderRow, TableRow } from "@/components/ui/table";
+import { ResponsiveDataList } from "@/components/ui/responsive-data-list";
 import { SiteSelector } from "@/components/site-selector";
 import { formatCHF, siteHealth, totalStockValue } from "@/lib/inventory";
 import type { SiteId } from "@/types";
@@ -62,7 +63,7 @@ export default async function DailySalesPage({
   return (
     <>
       {siteSelector}
-      <h1 className="text-xl font-semibold text-foreground">Ventes du jour — {site.name}</h1>
+      <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Ventes du jour — {site.name}</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         {canSubmit
           ? "Saisissez le chiffre d'affaires et les quantités vendues pour aujourd'hui."
@@ -85,19 +86,21 @@ export default async function DailySalesPage({
           ) : (
             <>
               <RevenueSparkline history={history} />
-              <Table>
-                <thead>
-                  <TableHeaderRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">CB</TableHead>
-                    <TableHead className="text-right">CA net</TableHead>
-                    <TableHead className="text-right">Espèces</TableHead>
-                    <TableHead className="text-right">Unités vendues</TableHead>
-                    <TableHead>Détail</TableHead>
-                  </TableHeaderRow>
-                </thead>
-                <tbody>
-                  {history.map((entry) => {
+              <div className="mt-4">
+                <ResponsiveDataList
+                  items={history}
+                  getKey={(entry) => entry.id}
+                  tableHead={
+                    <TableHeaderRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">CB</TableHead>
+                      <TableHead className="text-right">CA net</TableHead>
+                      <TableHead className="text-right">Espèces</TableHead>
+                      <TableHead className="text-right">Unités vendues</TableHead>
+                      <TableHead>Détail</TableHead>
+                    </TableHeaderRow>
+                  }
+                  renderRow={(entry) => {
                     const totalUnits = Object.values(entry.quantities).reduce((sum, q) => sum + q, 0);
                     const cashRevenue = Math.max(0, entry.netRevenue - entry.cardRevenue);
                     const detail = menu
@@ -122,9 +125,48 @@ export default async function DailySalesPage({
                         <TableCell className="text-xs text-muted-foreground">{detail || "—"}</TableCell>
                       </TableRow>
                     );
-                  })}
-                </tbody>
-              </Table>
+                  }}
+                  renderCard={(entry) => {
+                    const totalUnits = Object.values(entry.quantities).reduce((sum, q) => sum + q, 0);
+                    const cashRevenue = Math.max(0, entry.netRevenue - entry.cardRevenue);
+                    const detail = menu
+                      .filter((item) => (entry.quantities[item.id] ?? 0) > 0)
+                      .map((item) => `${item.name} × ${entry.quantities[item.id]}`)
+                      .join(", ");
+                    return (
+                      <div className="rounded-card bg-card p-4 shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)]">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-bold text-foreground">{entry.date}</p>
+                          <span className="rounded-pill bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+                            {totalUnits} unités
+                          </span>
+                        </div>
+                        <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                          <div>
+                            <p className="text-xs text-muted-foreground">CB</p>
+                            <p className="text-base font-bold tabular-nums text-metric-card-payment">
+                              {formatCHF(entry.cardRevenue)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Espèces</p>
+                            <p className="text-base font-bold tabular-nums text-metric-cash-payment">
+                              {formatCHF(cashRevenue)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">CA net</p>
+                            <p className="text-base font-bold tabular-nums text-foreground">
+                              {formatCHF(entry.netRevenue)}
+                            </p>
+                          </div>
+                        </div>
+                        {detail && <p className="mt-3 truncate text-xs text-muted-foreground">{detail}</p>}
+                      </div>
+                    );
+                  }}
+                />
+              </div>
             </>
           )}
         </Section>

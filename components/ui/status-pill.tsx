@@ -6,7 +6,7 @@ export function StatusPill({ status, children }: { status: HealthStatus; childre
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+        "inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-xs font-semibold",
         STATUS_BG_TEXT_CLASS[status]
       )}
     >

@@ -7,7 +7,8 @@ import { totalStockValue, formatCHF, groupByCategory } from "@/lib/inventory";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CategoryDot } from "@/components/ui/category-dot";
-import { Table, TableCell, TableFootRow, TableHead, TableHeaderRow, TableRow } from "@/components/ui/table";
+import { TableCell, TableHead, TableHeaderRow, TableRow } from "@/components/ui/table";
+import { ResponsiveDataList } from "@/components/ui/responsive-data-list";
 import { cn } from "@/lib/utils";
 import {
   deleteInventoryItemAction,
@@ -101,7 +102,7 @@ export function InventoryTable({
       ))}
 
       {visibleItems.length > 0 && (
-        <div className="flex items-center justify-end gap-2 rounded-xl border border-border bg-muted px-4 py-3">
+        <div className="flex items-center justify-end gap-2 rounded-card bg-muted px-4 py-3">
           <span className="text-sm font-medium text-muted-foreground">Valeur totale du stock</span>
           <span className="text-base font-semibold tabular-nums text-foreground">
             {formatCHF(totalStockValue(visibleItems))}
@@ -130,20 +131,22 @@ function ItemsTable({
   const total = totalStockValue(items);
 
   return (
-    <Table>
-      <thead>
-        <TableHeaderRow>
-          <TableHead>Article</TableHead>
-          <TableHead>Unité</TableHead>
-          <TableHead>Fournisseur</TableHead>
-          <TableHead>Quantité</TableHead>
-          <TableHead>Prix unitaire</TableHead>
-          <TableHead className="text-right">Valeur du stock</TableHead>
-          <TableHead />
-        </TableHeaderRow>
-      </thead>
-      <tbody>
-        {items.map((item) => (
+    <>
+      <ResponsiveDataList
+        items={items}
+        getKey={(item) => item.id}
+        tableHead={
+          <TableHeaderRow>
+            <TableHead>Article</TableHead>
+            <TableHead>Unité</TableHead>
+            <TableHead>Fournisseur</TableHead>
+            <TableHead>Quantité</TableHead>
+            <TableHead>Prix unitaire</TableHead>
+            <TableHead className="text-right">Valeur du stock</TableHead>
+            <TableHead />
+          </TableHeaderRow>
+        }
+        renderRow={(item) => (
           <ItemRow
             key={item.id}
             item={item}
@@ -152,20 +155,92 @@ function ItemsTable({
             onUpdate={onUpdate}
             onDelete={onDelete}
           />
-        ))}
-      </tbody>
-      <tfoot>
-        <TableFootRow>
-          <TableCell colSpan={5} className="text-right text-sm font-medium text-muted-foreground">
-            {totalLabel}
-          </TableCell>
-          <TableCell className="text-right text-base font-semibold tabular-nums text-foreground">
-            {formatCHF(total)}
-          </TableCell>
-          <TableCell />
-        </TableFootRow>
-      </tfoot>
-    </Table>
+        )}
+        renderCard={(item) => (
+          <ItemCard
+            item={item}
+            supplierName={suppliers.find((s) => s.id === item.supplierId)?.name}
+            siteId={siteId}
+            onUpdate={onUpdate}
+            onDelete={onDelete}
+          />
+        )}
+      />
+      <div className="hidden items-center justify-between rounded-card bg-muted px-4 py-3 lg:flex">
+        <span className="text-sm font-medium text-muted-foreground">{totalLabel}</span>
+        <span className="text-base font-semibold tabular-nums text-foreground">{formatCHF(total)}</span>
+      </div>
+    </>
+  );
+}
+
+// Mobile/tablet card equivalent of ItemRow, reusing inventory-cards.tsx's
+// stepper pattern — director also gets the price editable inline (already
+// has that permission via the desktop table).
+function ItemCard({
+  item,
+  supplierName,
+  siteId,
+  onUpdate,
+  onDelete,
+}: {
+  item: InventoryItem;
+  supplierName?: string;
+  siteId: SiteId;
+  onUpdate: (id: string, field: "quantity" | "unitPrice", value: number) => void;
+  onDelete: (id: string) => void;
+}) {
+  const stockValue = item.quantity * item.unitPrice;
+
+  return (
+    <div className="rounded-card bg-card p-4 shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)]">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-base font-semibold text-foreground">{item.name}</p>
+          <p className="text-xs text-muted-foreground">
+            {item.unit} · {supplierName ?? "Aucun fournisseur"}
+          </p>
+        </div>
+        <p className="text-right text-sm font-bold tabular-nums text-foreground">{formatCHF(stockValue)}</p>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Quantité</label>
+          <Input
+            type="number"
+            min={0}
+            step="1"
+            value={item.quantity}
+            onChange={(e) => onUpdate(item.id, "quantity", e.target.valueAsNumber)}
+            className="mt-1 tabular-nums"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Prix unitaire (CHF)</label>
+          <Input
+            type="number"
+            min={0}
+            step="0.05"
+            value={item.unitPrice}
+            onChange={(e) => onUpdate(item.id, "unitPrice", e.target.valueAsNumber)}
+            className="mt-1 tabular-nums"
+          />
+        </div>
+      </div>
+      <form
+        action={async (formData) => {
+          onDelete(item.id);
+          await deleteInventoryItemAction(formData);
+        }}
+        className="mt-3"
+      >
+        <input type="hidden" name="itemId" value={item.id} />
+        <input type="hidden" name="siteId" value={siteId} />
+        <Button type="submit" variant="destructive" size="sm">
+          Supprimer
+        </Button>
+      </form>
+    </div>
   );
 }
 
@@ -232,7 +307,7 @@ function ItemRow({
         >
           <input type="hidden" name="itemId" value={item.id} />
           <input type="hidden" name="siteId" value={siteId} />
-          <Button type="submit" variant="destructive" className="px-3 py-1 text-xs">
+          <Button type="submit" variant="destructive" size="sm">
             Supprimer
           </Button>
         </form>
@@ -245,22 +320,29 @@ function ItemRow({
 // role. Quantity/price aren't editable here — this screen is purely about
 // who gets to see what, kept separate from the stock-count/pricing table
 // above so toggling visibility never risks touching a number by mistake.
+// A visibility checkbox matrix doesn't translate naturally to a card list
+// (unlike ItemsTable's quantity/price fields) — deliberately kept as a
+// desktop-shaped table on every viewport, just horizontally scrollable on
+// narrow screens, rather than building a full card equivalent for a
+// low-traffic admin screen.
 function VisibilityTable({ items, siteId }: { items: InventoryItem[]; siteId?: SiteId }) {
   return (
-    <Table>
-      <thead>
-        <TableHeaderRow>
-          <TableHead>Article</TableHead>
-          <TableHead className="text-center">Chef crêpier</TableHead>
-          <TableHead className="text-center">Serveur</TableHead>
-        </TableHeaderRow>
-      </thead>
-      <tbody>
-        {items.map((item) => (
-          <VisibilityRow key={item.id} item={item} siteId={siteId} />
-        ))}
-      </tbody>
-    </Table>
+    <div className="overflow-x-auto rounded-card bg-card shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)]">
+      <table className="w-full text-sm">
+        <thead>
+          <TableHeaderRow>
+            <TableHead>Article</TableHead>
+            <TableHead className="text-center">Chef crêpier</TableHead>
+            <TableHead className="text-center">Serveur</TableHead>
+          </TableHeaderRow>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <VisibilityRow key={item.id} item={item} siteId={siteId} />
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

@@ -3,10 +3,12 @@ import { cn } from "@/lib/utils";
 
 type State = "neutral" | "highlighted" | "muted";
 
+const SHADOW = "shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)]";
+
 const STATE_CLASSES: Record<State, string> = {
-  neutral: "border-border bg-card hover:border-accent hover:bg-muted/50",
+  neutral: cn(SHADOW, "border-transparent bg-card hover:bg-muted/50"),
   highlighted: "border-accent bg-accent/5 hover:bg-accent/10",
-  muted: "border-border bg-card opacity-60 hover:opacity-100",
+  muted: cn(SHADOW, "border-transparent bg-card opacity-60 hover:opacity-100"),
 };
 
 const ARROW_CLASSES: Record<State, string> = {
@@ -30,7 +32,7 @@ export function NavCard({
     <Link
       href={href}
       className={cn(
-        "group flex items-center justify-between rounded-xl border px-4 py-3.5 transition-colors",
+        "group flex items-center justify-between rounded-card border px-4 py-3.5 transition-colors",
         STATE_CLASSES[state]
       )}
     >

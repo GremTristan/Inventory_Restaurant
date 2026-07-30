@@ -2,6 +2,7 @@ import Link from "next/link";
 import { sites } from "@/data/sites";
 import { getAllUsers } from "@/lib/user-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { buttonClassName } from "@/components/ui/button";
 import { Clock } from "@/components/clock";
 
 export default async function LoginPage() {
@@ -9,7 +10,7 @@ export default async function LoginPage() {
   const hasDirector = users.some((user) => user.role === "director");
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4 sm:px-6">
       <Clock className="text-center text-sm" />
       <Card className="w-full max-w-sm">
         <CardHeader>
@@ -23,7 +24,7 @@ export default async function LoginPage() {
             <Link
               key={site.id}
               href={`/login/${site.id}`}
-              className="inline-flex w-full items-center justify-between rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className={buttonClassName({ variant: "secondary", size: "lg", className: "w-full justify-between" })}
             >
               {site.name}
             </Link>
@@ -38,7 +39,7 @@ export default async function LoginPage() {
           <CardContent>
             <Link
               href="/login/direction"
-              className="inline-flex w-full items-center justify-center rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className={buttonClassName({ variant: "secondary", size: "lg", className: "w-full justify-center" })}
             >
               Direction
             </Link>

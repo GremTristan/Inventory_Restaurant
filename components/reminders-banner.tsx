@@ -25,13 +25,13 @@ export function RemindersBanner({
           {pending.map((reminder) => (
             <li
               key={reminder.kind}
-              className="flex items-center justify-between gap-4 rounded-md border border-border bg-muted px-4 py-2.5"
+              className="flex items-center justify-between gap-4 rounded-card bg-muted px-4 py-3"
             >
               <span className="text-sm text-foreground">{REMINDER_TEXT[reminder.kind]}</span>
               <form action={markReminderCompleteAction}>
                 <input type="hidden" name="siteId" value={siteId} />
                 <input type="hidden" name="kind" value={reminder.kind} />
-                <Button type="submit" variant="secondary" className="px-3 py-1 text-xs">
+                <Button type="submit" variant="secondary" size="sm">
                   Marquer comme fait
                 </Button>
               </form>

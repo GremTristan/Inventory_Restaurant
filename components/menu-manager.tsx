@@ -38,67 +38,55 @@ export function MenuManager({ sites, menuBySite }: { sites: Site[]; menuBySite: 
         </Select>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <ul className="divide-y divide-border">
-          {menu.map((item) =>
-            editingId === item.id ? (
-              <li key={item.id} className="flex items-center gap-2 px-4 py-2.5">
-                <form
-                  action={async (formData) => {
-                    await renameMenuItemAction(formData);
-                    setEditingId(null);
-                  }}
-                  className="flex flex-1 items-center gap-2"
-                >
+      <ul className="flex flex-col gap-2">
+        {menu.map((item) =>
+          editingId === item.id ? (
+            <li key={item.id} className="flex items-center gap-2 rounded-card bg-muted/40 px-4 py-3">
+              <form
+                action={async (formData) => {
+                  await renameMenuItemAction(formData);
+                  setEditingId(null);
+                }}
+                className="flex flex-1 items-center gap-2"
+              >
+                <input type="hidden" name="id" value={item.id} />
+                <Input name="name" defaultValue={item.name} className="flex-1" autoFocus />
+                <Button type="submit" variant="secondary" size="sm">
+                  Enregistrer
+                </Button>
+              </form>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setEditingId(null)}>
+                Annuler
+              </Button>
+            </li>
+          ) : (
+            <li key={item.id} className="flex items-center justify-between rounded-card bg-muted/40 px-4 py-3.5">
+              <span className="text-sm font-medium text-foreground">{item.name}</span>
+              <div className="flex items-center gap-1">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setEditingId(item.id)}>
+                  Renommer
+                </Button>
+                <form action={deleteMenuItemAction}>
                   <input type="hidden" name="id" value={item.id} />
-                  <Input name="name" defaultValue={item.name} className="flex-1" autoFocus />
-                  <Button type="submit" variant="secondary" className="px-3 py-1 text-xs">
-                    Enregistrer
+                  <Button type="submit" variant="destructive" size="sm">
+                    Supprimer
                   </Button>
                 </form>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="px-3 py-1 text-xs"
-                  onClick={() => setEditingId(null)}
-                >
-                  Annuler
-                </Button>
-              </li>
-            ) : (
-              <li key={item.id} className="flex items-center justify-between px-4 py-2.5">
-                <span className="text-sm font-medium text-foreground">{item.name}</span>
-                <div className="flex items-center gap-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="px-3 py-1 text-xs"
-                    onClick={() => setEditingId(item.id)}
-                  >
-                    Renommer
-                  </Button>
-                  <form action={deleteMenuItemAction}>
-                    <input type="hidden" name="id" value={item.id} />
-                    <Button type="submit" variant="destructive" className="px-3 py-1 text-xs">
-                      Supprimer
-                    </Button>
-                  </form>
-                </div>
-              </li>
-            )
-          )}
-          {menu.length === 0 && (
-            <li className="px-4 py-3 text-sm text-muted-foreground">Aucun produit pour le moment.</li>
-          )}
-        </ul>
-        <form action={createMenuItemAction} className="flex items-center gap-2 border-t border-border bg-muted px-4 py-3">
-          <input type="hidden" name="siteId" value={siteId} />
-          <Input name="name" placeholder="Nouveau produit" className="flex-1" required />
-          <Button type="submit" variant="primary" className="px-3 py-1.5 text-xs">
-            Ajouter
-          </Button>
-        </form>
-      </div>
+              </div>
+            </li>
+          )
+        )}
+        {menu.length === 0 && (
+          <li className="px-1 py-3 text-sm text-muted-foreground">Aucun produit pour le moment.</li>
+        )}
+      </ul>
+      <form action={createMenuItemAction} className="flex items-center gap-2 rounded-card bg-muted/60 px-4 py-3">
+        <input type="hidden" name="siteId" value={siteId} />
+        <Input name="name" placeholder="Nouveau produit" className="flex-1" required />
+        <Button type="submit" variant="primary" size="sm">
+          Ajouter
+        </Button>
+      </form>
     </div>
   );
 }

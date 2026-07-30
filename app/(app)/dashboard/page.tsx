@@ -17,7 +17,8 @@ import {
 import { aggregateRevenueByDate } from "@/lib/sales";
 import { computeInsights, pendingReminderInsight } from "@/lib/ai-insights";
 import { SiteSelector } from "@/components/site-selector";
-import { Card } from "@/components/ui/card";
+import { Card, CardBigNumber } from "@/components/ui/card";
+import { buttonClassName } from "@/components/ui/button";
 import { CategoryDot } from "@/components/ui/category-dot";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -70,7 +71,9 @@ export default async function DashboardPage() {
   return (
     <>
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Bonjour {user.name.split(" ")[0]} 👋</h1>
+        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
+          Bonjour {user.name.split(" ")[0]} 👋
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Voici l&apos;état de santé du groupe, {sitesHealth.length} établissements.
         </p>
@@ -85,12 +88,12 @@ export default async function DashboardPage() {
       </div>
 
       {/* Hero: overall health score + group stat tiles */}
-      <Card className="mt-6 flex flex-col items-center gap-6 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="mt-6 flex flex-col items-center gap-6 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div className="flex items-center gap-6">
           <ProgressRing value={health.score} status={health.status} label="SANTÉ" size={140} strokeWidth={13} />
           <div>
             <StatusPill status={health.status}>{health.label}</StatusPill>
-            <p className="mt-3 text-3xl font-semibold tabular-nums text-foreground">{formatCHF(grandTotal)}</p>
+            <CardBigNumber className="mt-3">{formatCHF(grandTotal)}</CardBigNumber>
             <p className="text-sm text-muted-foreground">Valeur totale du stock, groupe entier</p>
           </div>
         </div>
@@ -119,7 +122,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Group revenue trend */}
-      <Card className="mt-6 p-5">
+      <Card className="mt-6 p-4 sm:p-6">
         <h2 className="text-base font-semibold text-foreground">Tendance du chiffre d&apos;affaires</h2>
         <p className="mt-0.5 text-xs text-muted-foreground">Somme des ventes quotidiennes, tous sites confondus.</p>
         <div className="mt-5">
@@ -145,7 +148,7 @@ export default async function DashboardPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Category balance */}
-        <Card className="p-5">
+        <Card className="p-4 sm:p-6">
           <h2 className="text-base font-semibold text-foreground">Équilibre des catégories</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Trop de valeur en produits frais expose au risque de perte.
@@ -174,7 +177,7 @@ export default async function DashboardPage() {
         </Card>
 
         {/* Supplier risk */}
-        <Card className="p-5">
+        <Card className="p-4 sm:p-6">
           <h2 className="text-base font-semibold text-foreground">Fournisseurs</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">Qui porte la valeur de votre stock.</p>
           <div className="mt-5 space-y-3">
@@ -211,7 +214,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* RH: effectifs par établissement */}
-      <Card className="mt-6 p-5">
+      <Card className="mt-6 p-4 sm:p-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-foreground">Effectifs par établissement</h2>
@@ -227,7 +230,7 @@ export default async function DashboardPage() {
             const manager = siteEmployees.find((e) => e.role === "manager");
             const waiterCount = siteEmployees.filter((e) => e.role === "waiter").length;
             return (
-              <div key={site.id} className="rounded-xl bg-muted px-4 py-3">
+              <div key={site.id} className="rounded-card bg-muted px-4 py-3">
                 <p className="text-sm font-medium text-foreground">{site.name}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {manager ? manager.name : "Aucun chef crêpier"} · {waiterCount} serveur(s)
@@ -240,7 +243,7 @@ export default async function DashboardPage() {
 
       {/* Action needed */}
       {unassignedGroups.length > 0 && (
-        <Card className="mt-6 p-5">
+        <Card className="mt-6 p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-semibold text-foreground">À traiter</h2>
@@ -248,16 +251,13 @@ export default async function DashboardPage() {
                 {totalUnassigned} article(s) sans fournisseur assigné, risque d&apos;approvisionnement.
               </p>
             </div>
-            <Link
-              href="/dashboard/suppliers"
-              className="rounded-full bg-accent px-4 py-2 text-xs font-medium text-accent-foreground hover:bg-accent-hover"
-            >
+            <Link href="/dashboard/suppliers" className={buttonClassName({ size: "sm" })}>
               Assigner maintenant
             </Link>
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {unassignedGroups.map((group) => (
-              <div key={group.siteId} className="rounded-xl bg-muted px-4 py-3">
+              <div key={group.siteId} className="rounded-card bg-muted px-4 py-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-foreground">{group.siteName}</span>
                   <span className="text-xs font-semibold text-destructive">{group.items.length}</span>

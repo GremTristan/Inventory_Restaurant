@@ -23,14 +23,12 @@ export function EmployeeManager({ sites, employees }: { sites: Site[]; employees
       {sites.map((site) => {
         const siteEmployees = employees.filter((employee) => employee.siteId === site.id);
         return (
-          <div key={site.id} className="overflow-hidden rounded-xl border border-border bg-card">
-            <div className="border-b border-border bg-muted px-4 py-2.5">
-              <h3 className="text-sm font-semibold text-foreground">{site.name}</h3>
-            </div>
-            <ul className="divide-y divide-border">
+          <div key={site.id}>
+            <h3 className="text-sm font-bold text-foreground">{site.name}</h3>
+            <ul className="mt-2 flex flex-col gap-2">
               {siteEmployees.map((employee) =>
                 editingId === employee.id ? (
-                  <li key={employee.id} className="flex items-center gap-2 px-4 py-2.5">
+                  <li key={employee.id} className="flex items-center gap-2 rounded-card bg-muted/40 px-4 py-3">
                     <form
                       action={async (formData) => {
                         await renameEmployeeAction(formData);
@@ -40,21 +38,16 @@ export function EmployeeManager({ sites, employees }: { sites: Site[]; employees
                     >
                       <input type="hidden" name="id" value={employee.id} />
                       <Input name="name" defaultValue={employee.name} className="flex-1" autoFocus />
-                      <Button type="submit" variant="secondary" className="px-3 py-1 text-xs">
+                      <Button type="submit" variant="secondary" size="sm">
                         Enregistrer
                       </Button>
                     </form>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="px-3 py-1 text-xs"
-                      onClick={() => setEditingId(null)}
-                    >
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setEditingId(null)}>
                       Annuler
                     </Button>
                   </li>
                 ) : editingPasswordId === employee.id ? (
-                  <li key={employee.id} className="flex items-center gap-2 px-4 py-2.5">
+                  <li key={employee.id} className="flex items-center gap-2 rounded-card bg-muted/40 px-4 py-3">
                     <span className="text-sm font-medium text-foreground">{employee.name}</span>
                     <form
                       action={async (formData) => {
@@ -74,45 +67,38 @@ export function EmployeeManager({ sites, employees }: { sites: Site[]; employees
                         autoFocus
                         required
                       />
-                      <Button type="submit" variant="secondary" className="px-3 py-1 text-xs">
+                      <Button type="submit" variant="secondary" size="sm">
                         Enregistrer
                       </Button>
                     </form>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="px-3 py-1 text-xs"
-                      onClick={() => setEditingPasswordId(null)}
-                    >
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setEditingPasswordId(null)}>
                       Annuler
                     </Button>
                   </li>
                 ) : (
-                  <li key={employee.id} className="flex items-center justify-between px-4 py-2.5">
+                  <li
+                    key={employee.id}
+                    className="flex items-center justify-between rounded-card bg-muted/40 px-4 py-3.5"
+                  >
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-foreground">{employee.name}</span>
                       <span className="text-xs text-muted-foreground">{ROLE_LABELS[employee.role]}</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="px-3 py-1 text-xs"
-                        onClick={() => setEditingId(employee.id)}
-                      >
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setEditingId(employee.id)}>
                         Renommer
                       </Button>
                       <Button
                         type="button"
                         variant="ghost"
-                        className="px-3 py-1 text-xs"
+                        size="sm"
                         onClick={() => setEditingPasswordId(employee.id)}
                       >
                         Changer le PIN
                       </Button>
                       <form action={deleteEmployeeAction}>
                         <input type="hidden" name="id" value={employee.id} />
-                        <Button type="submit" variant="destructive" className="px-3 py-1 text-xs">
+                        <Button type="submit" variant="destructive" size="sm">
                           Supprimer
                         </Button>
                       </form>
@@ -121,21 +107,16 @@ export function EmployeeManager({ sites, employees }: { sites: Site[]; employees
                 )
               )}
               {siteEmployees.length === 0 && (
-                <li className="px-4 py-3 text-sm text-muted-foreground">Aucun employé pour le moment.</li>
+                <li className="px-1 py-3 text-sm text-muted-foreground">Aucun employé pour le moment.</li>
               )}
             </ul>
           </div>
         );
       })}
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <div className="border-b border-border bg-muted px-4 py-2.5">
-          <h3 className="text-sm font-semibold text-foreground">Ajouter un employé</h3>
-        </div>
-        <form
-          action={createEmployeeAction}
-          className="grid grid-cols-1 gap-3 px-4 py-4 sm:grid-cols-2 lg:grid-cols-4"
-        >
+      <div className="rounded-card bg-muted/60 p-4 sm:p-6">
+        <h3 className="text-sm font-bold text-foreground">Ajouter un employé</h3>
+        <form action={createEmployeeAction} className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Input name="name" placeholder="Nom" required />
           <Select name="role" defaultValue="waiter" required>
             {EMPLOYEE_ROLES.map((role) => (
@@ -159,7 +140,7 @@ export function EmployeeManager({ sites, employees }: { sites: Site[]; employees
             placeholder="PIN initial (4 chiffres)"
             required
           />
-          <Button type="submit" variant="primary" className="px-3 py-1.5 text-xs sm:col-span-2 lg:col-span-4">
+          <Button type="submit" variant="primary" size="sm" className="sm:col-span-2 lg:col-span-4">
             Ajouter
           </Button>
         </form>

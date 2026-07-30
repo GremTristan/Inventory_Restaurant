@@ -14,7 +14,7 @@ export default async function EmployeesPage() {
 
   return (
     <>
-      <h1 className="text-xl font-semibold text-foreground">Employés</h1>
+      <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Employés</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Gérez les comptes des chefs crêpiers et serveurs par établissement, ainsi que leur code PIN de connexion.
       </p>

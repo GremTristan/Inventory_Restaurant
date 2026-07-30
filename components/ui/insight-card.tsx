@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 export function InsightCard({ insight }: { insight: Insight }) {
   const content = (
-    <div className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3">
+    <div className="flex items-start gap-3 rounded-card bg-card px-4 py-3.5 shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)]">
       <span className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", STATUS_DOT_CLASS[insight.severity])} />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-foreground">{insight.title}</p>

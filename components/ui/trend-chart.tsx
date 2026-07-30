@@ -52,6 +52,14 @@ export function TrendChart({
   return (
     <div>
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full overflow-visible" style={{ height }}>
+        <defs>
+          {series.map((s) => (
+            <linearGradient key={s.id} id={`trend-fill-${s.id}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={s.color} stopOpacity={0.25} />
+              <stop offset="100%" stopColor={s.color} stopOpacity={0} />
+            </linearGradient>
+          ))}
+        </defs>
         {gridLines.map((y, i) => (
           <line key={i} x1={paddingX} y1={y} x2={width - paddingX} y2={y} stroke="var(--chart-grid)" strokeWidth={1} />
         ))}
@@ -59,9 +67,11 @@ export function TrendChart({
           if (s.points.length < 2) return null;
           const coords = coordsFor(s);
           const linePath = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c.x},${c.y}`).join(" ");
+          const areaPath = `${linePath} L${coords[coords.length - 1].x},${height - labelGutter} L${coords[0].x},${height - labelGutter} Z`;
           return (
             <g key={s.id}>
-              <path d={linePath} fill="none" stroke={s.color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+              <path d={areaPath} fill={`url(#trend-fill-${s.id})`} stroke="none" />
+              <path d={linePath} fill="none" stroke={s.color} strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
               {coords.map((c, i) => (
                 <circle key={i} cx={c.x} cy={c.y} r={2.5} fill={s.color}>
                   <title>

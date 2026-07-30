@@ -26,6 +26,30 @@
   --sidebar-muted-foreground: #9db3aa;
   --sidebar-border: #1e332c;
   --sidebar-accent: #2a4a3e;
+
+  /* Radius scale — Health-app rounded, single source of truth. Every
+     component should reference one of these instead of a hardcoded
+     rounded-md/rounded-xl/rounded-sm utility. */
+  --radius-control: 1rem;
+  --radius-pill: 9999px;
+  --radius-card: 1.5rem;
+  --radius-card-lg: 1.75rem;
+  --radius-sheet: 1.25rem;
+
+  /* Category palette — same hues as the old Tailwind literal classes in
+     types/index.ts's CATEGORY_COLORS, now tokenized so icon containers,
+     rings, and charts can all reference one name. */
+  --category-frais: #0ea5e9;
+  --category-sec: #f59e0b;
+  --category-sucre: #ec4899;
+  --category-viande: #e11d48;
+  --category-boissons: #0d9488;
+
+  /* Payment-method palette — distinguishes CB vs. espèces in sales entry,
+     previously both rendered in flat --accent green with no distinction. */
+  --metric-card-payment: #3b6ea5; /* = --accent-secondary, reused */
+  --metric-cash-payment: #8b5cf6; /* the one genuinely new hue */
+  --chart-3: var(--metric-cash-payment);
 }
 
 @theme inline {
@@ -54,7 +78,29 @@
   --color-sidebar-muted-foreground: var(--sidebar-muted-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent: var(--sidebar-accent);
-  --font-sans: var(--font-geist-sans);
+
+  --radius-control: var(--radius-control);
+  --radius-pill: var(--radius-pill);
+  --radius-card: var(--radius-card);
+  --radius-card-lg: var(--radius-card-lg);
+  --radius-sheet: var(--radius-sheet);
+
+  --color-category-frais: var(--category-frais);
+  --color-category-sec: var(--category-sec);
+  --color-category-sucre: var(--category-sucre);
+  --color-category-viande: var(--category-viande);
+  --color-category-boissons: var(--category-boissons);
+  --color-metric-card-payment: var(--metric-card-payment);
+  --color-metric-cash-payment: var(--metric-cash-payment);
+  --color-chart-3: var(--chart-3);
+
+  /* System-font stack — Apple Health's numeral shapes/letterforms are SF
+     Pro; on Apple devices -apple-system resolves to real SF Pro at zero
+     network cost, elsewhere it falls back to the platform-native sans
+     (Segoe UI/Roboto), which also costs nothing to load on low-end
+     kitchen/counter tablets vs. a Geist font-file fetch. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
 }
 
 body {
