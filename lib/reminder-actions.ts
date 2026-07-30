@@ -23,7 +23,7 @@ export async function markReminderCompleteAction(formData: FormData) {
   // otherwise a stale/tampered value could mark a different day or month
   // done than the one actually being acknowledged.
   const period = (kind as ReminderKind) === "daily-sales" ? todayPeriod() : monthPeriod();
-  markReminderComplete(siteId as SiteId, kind as ReminderKind, period, user.id);
+  await markReminderComplete(siteId as SiteId, kind as ReminderKind, period, user.id);
 
   revalidatePath(`/inventory/${siteId}`);
 }

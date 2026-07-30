@@ -20,7 +20,7 @@ export async function createMenuItemAction(formData: FormData) {
     throw new Error("Nom de produit invalide");
   }
 
-  addMenuItem(siteId as SiteId, name.trim());
+  await addMenuItem(siteId as SiteId, name.trim());
   revalidatePath(MENU_PATH);
 }
 
@@ -33,7 +33,7 @@ export async function renameMenuItemAction(formData: FormData) {
     throw new Error("Données invalides");
   }
 
-  renameMenuItem(id, name.trim());
+  await renameMenuItem(id, name.trim());
   revalidatePath(MENU_PATH);
 }
 
@@ -45,6 +45,6 @@ export async function deleteMenuItemAction(formData: FormData) {
     throw new Error("Données invalides");
   }
 
-  deleteMenuItem(id);
+  await deleteMenuItem(id);
   revalidatePath(MENU_PATH);
 }

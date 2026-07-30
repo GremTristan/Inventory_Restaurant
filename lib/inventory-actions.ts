@@ -29,7 +29,7 @@ export async function setItemVisibilityAction(formData: FormData) {
     throw new Error("Données invalides");
   }
 
-  setItemVisibility(itemId, visible === "true", forRole);
+  await setItemVisibility(itemId, visible === "true", forRole);
   revalidatePath(`/inventory/${siteId}`);
 }
 
@@ -46,7 +46,7 @@ export async function setItemCategoryAction(formData: FormData) {
     throw new Error("Données invalides");
   }
 
-  setItemCategory(itemId, category as Category);
+  await setItemCategory(itemId, category as Category);
   revalidatePath("/dashboard/suppliers");
 }
 
@@ -88,7 +88,7 @@ export async function addInventoryItemAction(formData: FormData) {
     throw new Error("Données invalides");
   }
 
-  addInventoryItem({
+  await addInventoryItem({
     siteId: siteId as SiteId,
     name: name.trim(),
     unit: unit.trim(),
@@ -138,7 +138,7 @@ export async function updateInventoryItemAction(formData: FormData) {
     changes.unitPrice = unitPrice;
   }
 
-  updateInventoryItem(itemId, changes);
+  await updateInventoryItem(itemId, changes);
   revalidatePath(`/inventory/${siteId}`);
 }
 
@@ -151,6 +151,6 @@ export async function deleteInventoryItemAction(formData: FormData) {
     throw new Error("Données invalides");
   }
 
-  deleteInventoryItem(itemId);
+  await deleteInventoryItem(itemId);
   revalidatePath(`/inventory/${siteId}`);
 }

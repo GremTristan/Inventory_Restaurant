@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, ShoppingBag, Truck, UtensilsCrossed, Users } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Truck, Upload, UtensilsCrossed, Users } from "lucide-react";
 import { ROLE_LABELS, type User } from "@/types";
 import { logoutAction } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ function useNavItems(user: User, hasOwnPendingReminder?: boolean): NavItem[] {
       { href: "/dashboard/suppliers", label: "Fournisseurs", icon: Truck },
       { href: "/dashboard/menu", label: "Menu", icon: UtensilsCrossed },
       { href: "/dashboard/employes", label: "Employés", icon: Users },
+      { href: "/dashboard/import", label: "Import de données", icon: Upload },
     ];
   }
   return [

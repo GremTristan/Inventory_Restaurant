@@ -19,7 +19,7 @@ export default async function LoginSitePage({
 
   if (!isDirection && !site) notFound();
 
-  const users = getAllUsers();
+  const users = await getAllUsers();
   const siteUsers = isDirection
     ? users.filter((user) => user.role === "director")
     : users.filter(
@@ -28,10 +28,13 @@ export default async function LoginSitePage({
 
   if (siteUsers.length === 0) notFound();
 
+  const pendingFlags = await Promise.all(
+    siteUsers.map((user) =>
+      !isDirection ? hasPendingReminderForRole(site!.id as SiteId, user.role) : Promise.resolve(false)
+    )
+  );
   const pendingUserIds = new Set(
-    siteUsers
-      .filter((user) => !isDirection && hasPendingReminderForRole(site!.id as SiteId, user.role))
-      .map((user) => user.id)
+    siteUsers.filter((_, i) => pendingFlags[i]).map((user) => user.id)
   );
 
   return (

@@ -17,7 +17,7 @@ export async function loginAction(_prevState: LoginState, formData: FormData): P
     return { error: "Code incorrect" };
   }
 
-  const authUser = getAuthUserById(userId);
+  const authUser = await getAuthUserById(userId);
   if (!authUser || !bcrypt.compareSync(pin, authUser.passwordHash)) {
     return { error: "Code incorrect" };
   }

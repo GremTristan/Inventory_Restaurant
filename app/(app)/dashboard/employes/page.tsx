@@ -10,7 +10,8 @@ export default async function EmployeesPage() {
   if (!user) redirect("/login");
   if (user.role !== "director") redirect(`/inventory/${user.siteId}`);
 
-  const employees = getAllUsers().filter((employee) => employee.role !== "director");
+  const allUsers = await getAllUsers();
+  const employees = allUsers.filter((employee) => employee.role !== "director");
 
   return (
     <>

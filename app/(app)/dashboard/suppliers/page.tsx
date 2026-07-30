@@ -11,8 +11,7 @@ export default async function SuppliersPage() {
   if (!user) redirect("/login");
   if (user.role !== "director") redirect(`/inventory/${user.siteId}`);
 
-  const suppliers = getSuppliers();
-  const items = getAllInventoryItems();
+  const [suppliers, items] = await Promise.all([getSuppliers(), getAllInventoryItems()]);
 
   return (
     <>

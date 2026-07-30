@@ -19,7 +19,7 @@ export async function createSupplierAction(formData: FormData) {
     throw new Error("Nom de fournisseur invalide");
   }
 
-  addSupplier(name.trim());
+  await addSupplier(name.trim());
   revalidatePath(SUPPLIERS_PATH);
 }
 
@@ -32,7 +32,7 @@ export async function renameSupplierAction(formData: FormData) {
     throw new Error("Données invalides");
   }
 
-  renameSupplier(id, name.trim());
+  await renameSupplier(id, name.trim());
   revalidatePath(SUPPLIERS_PATH);
 }
 
@@ -44,7 +44,7 @@ export async function deleteSupplierAction(formData: FormData) {
     throw new Error("Données invalides");
   }
 
-  deleteSupplier(id);
+  await deleteSupplier(id);
   revalidatePath(SUPPLIERS_PATH);
 }
 
@@ -57,6 +57,6 @@ export async function updateItemSupplierAction(formData: FormData) {
     throw new Error("Données invalides");
   }
 
-  setItemSupplier(itemId, typeof supplierId === "string" && supplierId !== "" ? supplierId : null);
+  await setItemSupplier(itemId, typeof supplierId === "string" && supplierId !== "" ? supplierId : null);
   revalidatePath(SUPPLIERS_PATH);
 }

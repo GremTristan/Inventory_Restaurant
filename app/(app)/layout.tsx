@@ -12,7 +12,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const hasOwnPendingReminder =
     user.role !== "director" && user.siteId
-      ? getPendingRemindersForRole(user.siteId, user.role).length > 0
+      ? (await getPendingRemindersForRole(user.siteId, user.role)).length > 0
       : false;
   const aiConfigured = Boolean(process.env.OLLAMA_API_KEY);
 

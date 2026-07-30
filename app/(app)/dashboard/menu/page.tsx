@@ -12,7 +12,7 @@ export default async function MenuPage() {
   if (user.role !== "director") redirect(`/inventory/${user.siteId}`);
 
   const menuBySite = Object.fromEntries(
-    sites.map((site) => [site.id, getMenuItems(site.id)])
+    await Promise.all(sites.map(async (site) => [site.id, await getMenuItems(site.id)] as const))
   ) as Record<SiteId, MenuItem[]>;
 
   return (

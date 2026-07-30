@@ -37,8 +37,8 @@ export default async function InventoryPage({
   const isDirector = user.role === "director";
   const isWaiter = user.role === "waiter";
   const isManager = user.role === "manager";
-  const pendingForRole = getPendingRemindersForRole(site.id as SiteId, user.role);
-  const managerAccessGranted = isManager && hasInventoryAccess(site.id as SiteId);
+  const pendingForRole = await getPendingRemindersForRole(site.id as SiteId, user.role);
+  const managerAccessGranted = isManager && (await hasInventoryAccess(site.id as SiteId));
 
   if (isWaiter) {
     return (
@@ -70,20 +70,25 @@ export default async function InventoryPage({
     );
   }
 
-  const items = isDirector
-    ? getInventoryBySite(site.id as SiteId)
-    : getVisibleInventoryBySiteForRole(site.id as SiteId, user.role);
-  const suppliers = getSuppliers();
+  const [items, suppliers] = await Promise.all([
+    isDirector
+      ? getInventoryBySite(site.id as SiteId)
+      : getVisibleInventoryBySiteForRole(site.id as SiteId, user.role),
+    getSuppliers(),
+  ]);
 
   let siteSelector: React.ReactNode = null;
   if (isDirector) {
-    const allItems = getAllInventoryItems();
+    const [allItems, inventoryAccessBySite] = await Promise.all([
+      getAllInventoryItems(),
+      getInventoryAccessBySite(),
+    ]);
     siteSelector = (
       <div className="mb-6">
         <SiteSelector
           sitesHealth={siteHealth(allItems)}
           grandTotal={totalStockValue(allItems)}
-          inventoryAccessBySite={getInventoryAccessBySite()}
+          inventoryAccessBySite={inventoryAccessBySite}
           currentSiteId={site.id as SiteId}
           navigateSuffix=""
         />

@@ -26,7 +26,7 @@ export async function recordDailySalesAction(formData: FormData) {
     throw new Error("Le chiffre d'affaires net ne peut pas être inférieur au montant CB");
   }
 
-  const menu = getMenuItems(siteId as SiteId);
+  const menu = await getMenuItems(siteId as SiteId);
   const quantities: Record<string, number> = {};
   for (const item of menu) {
     const raw = formData.get(`quantities[${item.id}]`);
@@ -35,7 +35,7 @@ export async function recordDailySalesAction(formData: FormData) {
   }
 
   const date = todayPeriod();
-  recordDailySales({
+  await recordDailySales({
     siteId: siteId as SiteId,
     date,
     cardRevenue,
@@ -48,7 +48,7 @@ export async function recordDailySalesAction(formData: FormData) {
   // "daily-sales" reminder — no separate manual click needed for the same
   // task. The monthly inventory reminder stays manual (no single action to
   // hook it to).
-  markReminderComplete(siteId as SiteId, "daily-sales", date, user.id);
+  await markReminderComplete(siteId as SiteId, "daily-sales", date, user.id);
 
   revalidatePath(`/inventory/${siteId}/sales`);
   revalidatePath(`/inventory/${siteId}`);

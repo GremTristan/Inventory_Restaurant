@@ -11,7 +11,7 @@ export async function getCurrentUser(): Promise<User | null> {
   const cookieStore = await cookies();
   const userId = cookieStore.get(SESSION_COOKIE)?.value;
   if (!userId) return null;
-  return getUserById(userId) ?? null;
+  return (await getUserById(userId)) ?? null;
 }
 
 export async function createSession(userId: string) {

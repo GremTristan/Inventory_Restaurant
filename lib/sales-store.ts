@@ -1,92 +1,27 @@
 import "server-only";
 
-import fs from "fs";
-import path from "path";
-import { randomUUID } from "crypto";
-import type {
-  DailySalesEntry,
-  MenuItem,
-  ReminderCompletion,
-  ReminderKind,
-  Role,
-  SiteId,
-} from "@/types";
-import { initialMenu } from "@/data/menu";
+import { and, eq } from "drizzle-orm";
+import { db } from "@/lib/db/client";
+import { dailySalesEntries, inventoryAccessGrants, menuItems, reminderCompletions } from "@/lib/db/schema";
+import type { DailySalesEntry, MenuItem, ReminderKind, Role, SiteId } from "@/types";
 import { sites } from "@/data/sites";
 
-// File-backed store for menu, daily sales and reminder completions. Kept
-// separate from inventory-store.ts's site-config.json so that unrelated
-// writes (e.g. marking a reminder done) never touch stock data, and so the
-// already-persisted site-config.json needs no backfilling for this feature.
-const DATA_FILE = path.join(process.cwd(), "data", "sales-config.json");
+// Postgres-backed store for menu, daily sales and reminder completions —
+// migrated off data/sales-config.json (see scripts/migrate-json-to-postgres.ts).
 
-interface StoreData {
-  menu: MenuItem[];
-  dailySales: DailySalesEntry[];
-  reminderCompletions: ReminderCompletion[];
-  // Sites where the director has granted the chef crêpier direct access to
-  // the inventory screen. Off by default — a manager's home screen shows a
-  // muted, unclickable-in-effect "Inventaire" card until the director flips
-  // this on for their site.
-  inventoryAccessSites: SiteId[];
-}
+type DailySalesRow = typeof dailySalesEntries.$inferSelect;
 
-function seed(): StoreData {
-  return { menu: initialMenu, dailySales: [], reminderCompletions: [], inventoryAccessSites: [] };
-}
-
-const initialMenuItemById = new Map(initialMenu.map((item) => [item.id, item]));
-
-// Backfill seams for fields added after records may already exist on disk —
-// same discipline as inventory-store.ts's normalizeItem, wired in now so the
-// next field addition doesn't require remembering to add it later. Menu
-// items written before menus were per-site have no `siteId` — recover it
-// from the seed by id, falling back to the first site as a last resort
-// (shouldn't normally happen).
-function normalizeMenuItem(item: MenuItem): MenuItem {
+function toDailySalesEntry(row: DailySalesRow): DailySalesEntry {
   return {
-    ...item,
-    siteId: item.siteId ?? initialMenuItemById.get(item.id)?.siteId ?? sites[0].id,
+    id: row.id,
+    siteId: row.siteId,
+    date: row.date,
+    cardRevenue: Number(row.cardRevenue),
+    netRevenue: Number(row.netRevenue),
+    quantities: row.quantities,
+    recordedByUserId: row.recordedByUserId,
+    recordedAt: row.recordedAt.toISOString(),
   };
-}
-
-// Records written before CB/CA net split had a single `revenue` field —
-// treat it as the net revenue with no card breakdown known.
-function normalizeDailySalesEntry(entry: DailySalesEntry): DailySalesEntry {
-  const legacyRevenue = (entry as unknown as { revenue?: number }).revenue;
-  return {
-    ...entry,
-    cardRevenue: entry.cardRevenue ?? 0,
-    netRevenue: entry.netRevenue ?? legacyRevenue ?? 0,
-    quantities: entry.quantities ?? {},
-  };
-}
-
-function normalizeReminderCompletion(record: ReminderCompletion): ReminderCompletion {
-  return { ...record };
-}
-
-function readStore(): StoreData {
-  if (!fs.existsSync(DATA_FILE)) {
-    const data = seed();
-    writeStore(data);
-    return data;
-  }
-  const raw = fs.readFileSync(DATA_FILE, "utf-8");
-  const data = JSON.parse(raw) as StoreData;
-  data.menu = data.menu.map(normalizeMenuItem);
-  data.dailySales = data.dailySales.map(normalizeDailySalesEntry);
-  data.reminderCompletions = data.reminderCompletions.map(normalizeReminderCompletion);
-  // Records written before this feature existed have no field at all —
-  // default to no access granted, matching seed().
-  data.inventoryAccessSites = data.inventoryAccessSites ?? [];
-  return data;
-}
-
-function writeStore(data: StoreData) {
-  const tmpFile = `${DATA_FILE}.${process.pid}.tmp`;
-  fs.writeFileSync(tmpFile, JSON.stringify(data, null, 2), "utf-8");
-  fs.renameSync(tmpFile, DATA_FILE);
 }
 
 export function todayPeriod(): string {
@@ -99,117 +34,107 @@ export function monthPeriod(): string {
 
 // --- Menu ---
 
-export function getMenuItems(siteId: SiteId): MenuItem[] {
-  return readStore().menu.filter((item) => item.siteId === siteId);
+export async function getMenuItems(siteId: SiteId): Promise<MenuItem[]> {
+  return db.select().from(menuItems).where(eq(menuItems.siteId, siteId));
 }
 
-export function addMenuItem(siteId: SiteId, name: string): MenuItem {
-  const data = readStore();
-  const item: MenuItem = { id: randomUUID(), siteId, name };
-  data.menu.push(item);
-  writeStore(data);
+export async function addMenuItem(siteId: SiteId, name: string): Promise<MenuItem> {
+  const [item] = await db.insert(menuItems).values({ siteId, name }).returning();
   return item;
 }
 
-export function renameMenuItem(id: string, name: string) {
-  const data = readStore();
-  const item = data.menu.find((i) => i.id === id);
-  if (!item) return;
-  item.name = name;
-  writeStore(data);
+export async function renameMenuItem(id: string, name: string): Promise<void> {
+  await db.update(menuItems).set({ name }).where(eq(menuItems.id, id));
 }
 
-export function deleteMenuItem(id: string) {
-  const data = readStore();
-  data.menu = data.menu.filter((i) => i.id !== id);
-  writeStore(data);
+export async function deleteMenuItem(id: string): Promise<void> {
+  await db.delete(menuItems).where(eq(menuItems.id, id));
 }
 
 // --- Daily sales ---
 
-export function getDailySalesBySite(siteId: SiteId): DailySalesEntry[] {
-  return readStore()
-    .dailySales.filter((entry) => entry.siteId === siteId)
-    .sort((a, b) => b.date.localeCompare(a.date));
+export async function getDailySalesBySite(siteId: SiteId): Promise<DailySalesEntry[]> {
+  const rows = await db.select().from(dailySalesEntries).where(eq(dailySalesEntries.siteId, siteId));
+  return rows.map(toDailySalesEntry).sort((a, b) => b.date.localeCompare(a.date));
 }
 
-export function getDailySalesEntry(siteId: SiteId, date: string): DailySalesEntry | undefined {
-  return readStore().dailySales.find((entry) => entry.siteId === siteId && entry.date === date);
+export async function getDailySalesEntry(
+  siteId: SiteId,
+  date: string
+): Promise<DailySalesEntry | undefined> {
+  const [row] = await db
+    .select()
+    .from(dailySalesEntries)
+    .where(and(eq(dailySalesEntries.siteId, siteId), eq(dailySalesEntries.date, date)));
+  return row ? toDailySalesEntry(row) : undefined;
 }
 
-export function recordDailySales(input: {
+export async function recordDailySales(input: {
   siteId: SiteId;
   date: string;
   cardRevenue: number;
   netRevenue: number;
   quantities: Record<string, number>;
   recordedByUserId: string;
-}): DailySalesEntry {
-  const data = readStore();
-  const existing = data.dailySales.find(
-    (entry) => entry.siteId === input.siteId && entry.date === input.date
-  );
-  const recordedAt = new Date().toISOString();
-
-  if (existing) {
-    existing.cardRevenue = input.cardRevenue;
-    existing.netRevenue = input.netRevenue;
-    existing.quantities = input.quantities;
-    existing.recordedByUserId = input.recordedByUserId;
-    existing.recordedAt = recordedAt;
-    writeStore(data);
-    return existing;
-  }
-
-  const entry: DailySalesEntry = {
-    id: randomUUID(),
-    siteId: input.siteId,
-    date: input.date,
-    cardRevenue: input.cardRevenue,
-    netRevenue: input.netRevenue,
-    quantities: input.quantities,
-    recordedByUserId: input.recordedByUserId,
-    recordedAt,
-  };
-  data.dailySales.push(entry);
-  writeStore(data);
-  return entry;
+}): Promise<DailySalesEntry> {
+  const [row] = await db
+    .insert(dailySalesEntries)
+    .values({
+      siteId: input.siteId,
+      date: input.date,
+      cardRevenue: input.cardRevenue.toString(),
+      netRevenue: input.netRevenue.toString(),
+      quantities: input.quantities,
+      recordedByUserId: input.recordedByUserId,
+      recordedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: [dailySalesEntries.siteId, dailySalesEntries.date],
+      set: {
+        cardRevenue: input.cardRevenue.toString(),
+        netRevenue: input.netRevenue.toString(),
+        quantities: input.quantities,
+        recordedByUserId: input.recordedByUserId,
+        recordedAt: new Date(),
+      },
+    })
+    .returning();
+  return toDailySalesEntry(row);
 }
 
 // --- Reminders ---
 
-export function isReminderComplete(siteId: SiteId, kind: ReminderKind, period: string): boolean {
-  return readStore().reminderCompletions.some(
-    (record) => record.siteId === siteId && record.kind === kind && record.period === period
-  );
+export async function isReminderComplete(
+  siteId: SiteId,
+  kind: ReminderKind,
+  period: string
+): Promise<boolean> {
+  const [row] = await db
+    .select()
+    .from(reminderCompletions)
+    .where(
+      and(
+        eq(reminderCompletions.siteId, siteId),
+        eq(reminderCompletions.kind, kind),
+        eq(reminderCompletions.period, period)
+      )
+    );
+  return row !== undefined;
 }
 
-export function markReminderComplete(
+export async function markReminderComplete(
   siteId: SiteId,
   kind: ReminderKind,
   period: string,
   completedByUserId: string
-) {
-  const data = readStore();
-  const existing = data.reminderCompletions.find(
-    (record) => record.siteId === siteId && record.kind === kind && record.period === period
-  );
-  const completedAt = new Date().toISOString();
-
-  if (existing) {
-    existing.completedAt = completedAt;
-    existing.completedByUserId = completedByUserId;
-  } else {
-    data.reminderCompletions.push({
-      id: randomUUID(),
-      siteId,
-      kind,
-      period,
-      completedAt,
-      completedByUserId,
+): Promise<void> {
+  await db
+    .insert(reminderCompletions)
+    .values({ siteId, kind, period, completedByUserId, completedAt: new Date() })
+    .onConflictDoUpdate({
+      target: [reminderCompletions.siteId, reminderCompletions.kind, reminderCompletions.period],
+      set: { completedByUserId, completedAt: new Date() },
     });
-  }
-  writeStore(data);
 }
 
 export interface PendingReminder {
@@ -219,22 +144,26 @@ export interface PendingReminder {
 
 // Single source of truth for "what's pending" — both the nav badge and the
 // notifications banner call this, so they can never drift out of sync.
-export function getPendingReminders(siteId: SiteId): PendingReminder[] {
+export async function getPendingReminders(siteId: SiteId): Promise<PendingReminder[]> {
   const today = todayPeriod();
   const month = monthPeriod();
   const pending: PendingReminder[] = [];
 
-  if (!isReminderComplete(siteId, "daily-sales", today)) {
-    pending.push({ kind: "daily-sales", period: today });
-  }
-  if (!isReminderComplete(siteId, "monthly-inventory", month)) {
-    pending.push({ kind: "monthly-inventory", period: month });
-  }
+  const [dailyDone, monthlyDone] = await Promise.all([
+    isReminderComplete(siteId, "daily-sales", today),
+    isReminderComplete(siteId, "monthly-inventory", month),
+  ]);
+
+  if (!dailyDone) pending.push({ kind: "daily-sales", period: today });
+  if (!monthlyDone) pending.push({ kind: "monthly-inventory", period: month });
   return pending;
 }
 
-export function getPendingReminderCounts(): Partial<Record<SiteId, number>> {
-  return Object.fromEntries(sites.map((site) => [site.id, getPendingReminders(site.id).length]));
+export async function getPendingReminderCounts(): Promise<Partial<Record<SiteId, number>>> {
+  const entries = await Promise.all(
+    sites.map(async (site) => [site.id, (await getPendingReminders(site.id)).length] as const)
+  );
+  return Object.fromEntries(entries);
 }
 
 // Which reminder kind each role is actually responsible for — a manager
@@ -247,36 +176,37 @@ const REMINDER_KIND_BY_ROLE: Partial<Record<Role, ReminderKind>> = {
   waiter: "daily-sales",
 };
 
-export function getPendingRemindersForRole(siteId: SiteId, role: Role): PendingReminder[] {
+export async function getPendingRemindersForRole(siteId: SiteId, role: Role): Promise<PendingReminder[]> {
   const kind = REMINDER_KIND_BY_ROLE[role];
-  const pending = getPendingReminders(siteId);
+  const pending = await getPendingReminders(siteId);
   return kind ? pending.filter((reminder) => reminder.kind === kind) : pending;
 }
 
-export function hasPendingReminderForRole(siteId: SiteId, role: Role): boolean {
-  return getPendingRemindersForRole(siteId, role).length > 0;
+export async function hasPendingReminderForRole(siteId: SiteId, role: Role): Promise<boolean> {
+  return (await getPendingRemindersForRole(siteId, role)).length > 0;
 }
 
 // --- Manager inventory access ---
 
-export function hasInventoryAccess(siteId: SiteId): boolean {
-  return readStore().inventoryAccessSites.includes(siteId);
+export async function hasInventoryAccess(siteId: SiteId): Promise<boolean> {
+  const [row] = await db
+    .select()
+    .from(inventoryAccessGrants)
+    .where(eq(inventoryAccessGrants.siteId, siteId));
+  return row !== undefined;
 }
 
-export function setInventoryAccess(siteId: SiteId, granted: boolean) {
-  const data = readStore();
-  const has = data.inventoryAccessSites.includes(siteId);
-  if (granted && !has) {
-    data.inventoryAccessSites.push(siteId);
-    writeStore(data);
-  } else if (!granted && has) {
-    data.inventoryAccessSites = data.inventoryAccessSites.filter((id) => id !== siteId);
-    writeStore(data);
+export async function setInventoryAccess(siteId: SiteId, granted: boolean): Promise<void> {
+  if (granted) {
+    await db.insert(inventoryAccessGrants).values({ siteId }).onConflictDoNothing();
+  } else {
+    await db.delete(inventoryAccessGrants).where(eq(inventoryAccessGrants.siteId, siteId));
   }
 }
 
-export function getInventoryAccessBySite(): Record<SiteId, boolean> {
-  const granted = new Set(readStore().inventoryAccessSites);
+export async function getInventoryAccessBySite(): Promise<Record<SiteId, boolean>> {
+  const rows = await db.select().from(inventoryAccessGrants);
+  const granted = new Set(rows.map((r) => r.siteId));
   return Object.fromEntries(sites.map((site) => [site.id, granted.has(site.id)])) as Record<
     SiteId,
     boolean

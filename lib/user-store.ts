@@ -1,121 +1,84 @@
 import "server-only";
 
-import fs from "fs";
-import path from "path";
-import { randomUUID } from "crypto";
-import bcrypt from "bcryptjs";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db/client";
+import { users } from "@/lib/db/schema";
 import type { AuthUser, Role, SiteId, User } from "@/types";
-import { initialUsers } from "@/data/users";
 
-// File-backed store for user accounts (directory + hashed PINs). Kept
-// separate from site-config.json/sales-config.json so that a credentials
-// write never touches stock or sales data — same rationale as the split
-// already documented in sales-store.ts.
-const DATA_FILE = path.join(process.cwd(), "data", "user-config.json");
-
-interface StoreData {
-  users: AuthUser[];
-}
-
-function seed(): StoreData {
-  return {
-    users: initialUsers.map((seedUser) => ({
-      id: seedUser.id,
-      name: seedUser.name,
-      role: seedUser.role,
-      siteId: seedUser.siteId,
-      passwordHash: bcrypt.hashSync(seedUser.defaultPin, 10),
-    })),
-  };
-}
-
-function readStore(): StoreData {
-  if (!fs.existsSync(DATA_FILE)) {
-    const data = seed();
-    writeStore(data);
-    return data;
-  }
-  const raw = fs.readFileSync(DATA_FILE, "utf-8");
-  return JSON.parse(raw) as StoreData;
-}
-
-function writeStore(data: StoreData) {
-  const tmpFile = `${DATA_FILE}.${process.pid}.tmp`;
-  fs.writeFileSync(tmpFile, JSON.stringify(data, null, 2), "utf-8");
-  fs.renameSync(tmpFile, DATA_FILE);
-}
+// Postgres-backed store for user accounts (directory + hashed PINs) —
+// migrated off data/user-config.json (see scripts/migrate-json-to-postgres.ts).
 
 function stripHash(authUser: AuthUser): User {
   const { passwordHash: _passwordHash, ...publicUser } = authUser;
   return publicUser;
 }
 
+function toAuthUser(row: typeof users.$inferSelect): AuthUser {
+  return {
+    id: row.id,
+    name: row.name,
+    role: row.role,
+    siteId: row.siteId,
+    passwordHash: row.passwordHash,
+  };
+}
+
 // --- Public reads (never expose passwordHash) ---
 
-export function getAllUsers(): User[] {
-  return readStore().users.map(stripHash);
+export async function getAllUsers(): Promise<User[]> {
+  const rows = await db.select().from(users);
+  return rows.map(toAuthUser).map(stripHash);
 }
 
-export function getUserById(id: string): User | undefined {
-  const authUser = readStore().users.find((u) => u.id === id);
-  return authUser ? stripHash(authUser) : undefined;
+export async function getUserById(id: string): Promise<User | undefined> {
+  const [row] = await db.select().from(users).where(eq(users.id, id));
+  return row ? stripHash(toAuthUser(row)) : undefined;
 }
 
-export function getUsersBySite(siteId: SiteId): User[] {
-  return readStore()
-    .users.filter((u) => u.siteId === siteId)
-    .map(stripHash);
+export async function getUsersBySite(siteId: SiteId): Promise<User[]> {
+  const rows = await db.select().from(users).where(eq(users.siteId, siteId));
+  return rows.map(toAuthUser).map(stripHash);
 }
 
 // --- Internal-only: carries the hash, for password verification ---
 
-export function getAuthUserById(id: string): AuthUser | undefined {
-  return readStore().users.find((u) => u.id === id);
+export async function getAuthUserById(id: string): Promise<AuthUser | undefined> {
+  const [row] = await db.select().from(users).where(eq(users.id, id));
+  return row ? toAuthUser(row) : undefined;
 }
 
 // --- Mutations (director-only, guarded by callers in lib/employee-actions.ts) ---
 
-export function createUser(input: {
+export async function createUser(input: {
   name: string;
   role: Role;
   siteId: SiteId;
   passwordHash: string;
-}): User {
-  const data = readStore();
-  const authUser: AuthUser = {
-    id: randomUUID(),
-    name: input.name,
-    role: input.role,
-    siteId: input.siteId,
-    passwordHash: input.passwordHash,
-  };
-  data.users.push(authUser);
-  writeStore(data);
-  return stripHash(authUser);
+}): Promise<User> {
+  const [row] = await db
+    .insert(users)
+    .values({
+      name: input.name,
+      role: input.role,
+      siteId: input.siteId,
+      passwordHash: input.passwordHash,
+    })
+    .returning();
+  return stripHash(toAuthUser(row));
 }
 
-export function renameUser(id: string, name: string) {
-  const data = readStore();
-  const user = data.users.find((u) => u.id === id);
-  if (!user) return;
-  user.name = name;
-  writeStore(data);
+export async function renameUser(id: string, name: string): Promise<void> {
+  await db.update(users).set({ name }).where(eq(users.id, id));
 }
 
-export function deleteUser(id: string) {
-  const data = readStore();
-  const user = data.users.find((u) => u.id === id);
+export async function deleteUser(id: string): Promise<void> {
   // Defense in depth: the UI never exposes deleting the director, but a
   // server action is reachable by direct POST regardless of what's hidden.
-  if (!user || user.role === "director") return;
-  data.users = data.users.filter((u) => u.id !== id);
-  writeStore(data);
+  const [row] = await db.select().from(users).where(eq(users.id, id));
+  if (!row || row.role === "director") return;
+  await db.delete(users).where(eq(users.id, id));
 }
 
-export function setUserPassword(id: string, passwordHash: string) {
-  const data = readStore();
-  const user = data.users.find((u) => u.id === id);
-  if (!user) return;
-  user.passwordHash = passwordHash;
-  writeStore(data);
+export async function setUserPassword(id: string, passwordHash: string): Promise<void> {
+  await db.update(users).set({ passwordHash }).where(eq(users.id, id));
 }

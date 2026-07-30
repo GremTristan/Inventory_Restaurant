@@ -15,7 +15,7 @@ export async function setInventoryAccessAction(formData: FormData) {
     throw new Error("Données invalides");
   }
 
-  setInventoryAccess(siteId as SiteId, granted === "true");
+  await setInventoryAccess(siteId as SiteId, granted === "true");
 
   revalidatePath("/dashboard");
   revalidatePath(`/inventory/${siteId}`);

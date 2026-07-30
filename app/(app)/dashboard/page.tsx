@@ -32,13 +32,19 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
   if (user.role !== "director") redirect(`/inventory/${user.siteId}`);
 
-  const inventory = getAllInventoryItems();
-  const suppliers = getSuppliers();
-  const inventoryAccessBySite = getInventoryAccessBySite();
-  const allUsers = getAllUsers();
+  const [inventory, suppliers, inventoryAccessBySite, allUsers, dailySalesBySite, pendingCounts, usersBySite] =
+    await Promise.all([
+      getAllInventoryItems(),
+      getSuppliers(),
+      getInventoryAccessBySite(),
+      getAllUsers(),
+      Promise.all(sites.map((site) => getDailySalesBySite(site.id))),
+      getPendingReminderCounts(),
+      Promise.all(sites.map(async (site) => [site.id, await getUsersBySite(site.id)] as const)),
+    ]);
   const employees = allUsers.filter((u) => u.role !== "director");
-  const allDailySales = sites.flatMap((site) => getDailySalesBySite(site.id));
-  const pendingCounts = getPendingReminderCounts();
+  const allDailySales = dailySalesBySite.flat();
+  const employeesBySiteId = new Map(usersBySite);
 
   const grandTotal = totalStockValue(inventory);
   const health = groupHealthScore(inventory, suppliers);
@@ -226,7 +232,7 @@ export default async function DashboardPage() {
         </div>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {sites.map((site) => {
-            const siteEmployees = getUsersBySite(site.id);
+            const siteEmployees = employeesBySiteId.get(site.id) ?? [];
             const manager = siteEmployees.find((e) => e.role === "manager");
             const waiterCount = siteEmployees.filter((e) => e.role === "waiter").length;
             return (

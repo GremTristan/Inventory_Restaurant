@@ -37,22 +37,25 @@ export default async function DailySalesPage({
   }
 
   const canSubmit = user.role === "director" || user.role === "waiter";
-  const menu = getMenuItems(site.id as SiteId);
-  const history = getDailySalesBySite(site.id as SiteId);
-  const todayEntry = canSubmit
-    ? getDailySalesEntry(site.id as SiteId, todayPeriod())
-    : undefined;
+  const [menu, history, todayEntry] = await Promise.all([
+    getMenuItems(site.id as SiteId),
+    getDailySalesBySite(site.id as SiteId),
+    canSubmit ? getDailySalesEntry(site.id as SiteId, todayPeriod()) : Promise.resolve(undefined),
+  ]);
   const isDirector = user.role === "director";
 
   let siteSelector: React.ReactNode = null;
   if (isDirector) {
-    const allItems = getAllInventoryItems();
+    const [allItems, inventoryAccessBySite] = await Promise.all([
+      getAllInventoryItems(),
+      getInventoryAccessBySite(),
+    ]);
     siteSelector = (
       <div className="mb-6">
         <SiteSelector
           sitesHealth={siteHealth(allItems)}
           grandTotal={totalStockValue(allItems)}
-          inventoryAccessBySite={getInventoryAccessBySite()}
+          inventoryAccessBySite={inventoryAccessBySite}
           currentSiteId={site.id as SiteId}
           navigateSuffix="/sales"
         />

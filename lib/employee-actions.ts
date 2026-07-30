@@ -34,7 +34,7 @@ export async function createEmployeeAction(formData: FormData) {
   }
   assertValidPin(pin);
 
-  createUser({
+  await createUser({
     name: name.trim(),
     role: role as Role,
     siteId: siteId as SiteId,
@@ -52,7 +52,7 @@ export async function renameEmployeeAction(formData: FormData) {
     throw new Error("Données invalides");
   }
 
-  renameUser(id, name.trim());
+  await renameUser(id, name.trim());
   revalidatePath(EMPLOYEES_PATH);
 }
 
@@ -64,7 +64,7 @@ export async function deleteEmployeeAction(formData: FormData) {
     throw new Error("Données invalides");
   }
 
-  deleteUser(id);
+  await deleteUser(id);
   revalidatePath(EMPLOYEES_PATH);
 }
 
@@ -78,6 +78,6 @@ export async function changeEmployeePinAction(formData: FormData) {
   }
   assertValidPin(pin);
 
-  setUserPassword(id, bcrypt.hashSync(pin, 10));
+  await setUserPassword(id, bcrypt.hashSync(pin, 10));
   revalidatePath(EMPLOYEES_PATH);
 }

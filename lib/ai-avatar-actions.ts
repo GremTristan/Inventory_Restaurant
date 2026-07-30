@@ -76,7 +76,7 @@ export async function sendAvatarMessageAction(
     imageMediaType = imageFile.type as ReceiptImageMediaType;
   }
 
-  const contextText = buildContextForUser(user.role, siteId, user.id);
+  const contextText = await buildContextForUser(user.role, siteId, user.id);
   const systemPrompt =
     "Tu es l'assistant IA d'un groupe de crêperies. Réponds en français, de façon concise et " +
     "professionnelle. Si une photo de ticket de caisse est jointe, tu peux soit la commenter " +
@@ -128,7 +128,7 @@ export async function sendAvatarMessageAction(
   }
 
   if (imageBuffer && imageMediaType && agentResult.reply) {
-    saveReceipt({
+    await saveReceipt({
       siteId,
       submittedByUserId: user.id,
       imageBuffer,
@@ -142,17 +142,22 @@ export async function sendAvatarMessageAction(
 
 // --- Context assembly: full dump per turn, today-scoped, no tool-use ---
 
-function buildContextForUser(role: Role, siteId: SiteId, userId: string): string {
+async function buildContextForUser(role: Role, siteId: SiteId, userId: string): Promise<string> {
   const site = getSiteById(siteId);
   const today = todayPeriod();
 
   if (role === "director") {
-    const inventory = getAllInventoryItems();
-    const suppliers = getSuppliers();
-    const employees = getAllUsers().filter((u) => u.role !== "director");
-    const allDailySales = sites.flatMap((s) => getDailySalesBySite(s.id));
+    const [inventory, suppliers, allUsers, allDailySalesBySite, allReceipts] = await Promise.all([
+      getAllInventoryItems(),
+      getSuppliers(),
+      getAllUsers(),
+      Promise.all(sites.map((s) => getDailySalesBySite(s.id))),
+      getAllReceipts(),
+    ]);
+    const employees = allUsers.filter((u) => u.role !== "director");
+    const allDailySales = allDailySalesBySite.flat();
     const insights = computeInsights({ inventory, suppliers, allDailySales, employees, sites });
-    const todaysReceipts = getAllReceipts().filter((r) => r.submittedAt.slice(0, 10) === today);
+    const todaysReceipts = allReceipts.filter((r) => r.submittedAt.slice(0, 10) === today);
 
     const insightsText =
       insights.map((i) => `- [${i.severity}] ${i.title}: ${i.detail}`).join("\n") ||
@@ -178,12 +183,14 @@ function buildContextForUser(role: Role, siteId: SiteId, userId: string): string
   // branch — that would leak purchase-price/supplier data into a
   // waiter/manager's LLM context, which the app never exposes to those
   // roles anywhere else in the UI.
-  const inventory = getVisibleInventoryBySiteForRole(siteId, role);
-  const todaysSales = getDailySalesBySite(siteId).find((e) => e.date === today);
-  const menu = getMenuItems(siteId);
-  const myReceipts = getReceiptsBySiteForUser(siteId, userId).filter(
-    (r) => r.submittedAt.slice(0, 10) === today
-  );
+  const [inventory, dailySales, menu, receiptsForUser] = await Promise.all([
+    getVisibleInventoryBySiteForRole(siteId, role),
+    getDailySalesBySite(siteId),
+    getMenuItems(siteId),
+    getReceiptsBySiteForUser(siteId, userId),
+  ]);
+  const todaysSales = dailySales.find((e) => e.date === today);
+  const myReceipts = receiptsForUser.filter((r) => r.submittedAt.slice(0, 10) === today);
 
   const inventoryText =
     inventory.length > 0

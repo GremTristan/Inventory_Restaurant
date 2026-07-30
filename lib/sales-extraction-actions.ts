@@ -29,7 +29,7 @@ export async function extractSalesFromReceiptCore(
   siteId: SiteId,
   imageBuffer: Buffer
 ): Promise<ExtractionResult> {
-  const menu = getMenuItems(siteId);
+  const menu = await getMenuItems(siteId);
   const menuNames = menu.map((m) => m.name).join(", ") || "(aucun produit au menu)";
 
   // A single `user` message, no separate `system` message: empirically,

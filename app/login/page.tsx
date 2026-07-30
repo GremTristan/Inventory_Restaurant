@@ -6,7 +6,7 @@ import { buttonClassName } from "@/components/ui/button";
 import { Clock } from "@/components/clock";
 
 export default async function LoginPage() {
-  const users = getAllUsers();
+  const users = await getAllUsers();
   const hasDirector = users.some((user) => user.role === "director");
 
   return (
