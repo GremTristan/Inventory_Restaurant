@@ -31,7 +31,7 @@ export function PinLogin({ staff }: { staff: User[] }) {
 
   if (staff.length === 0) {
     return (
-      <p className="rounded-card bg-muted p-6 text-center text-base text-muted-foreground">
+      <p className="rounded-lg bg-muted p-6 text-center text-base text-muted-foreground">
         Aucun membre de l’équipe n’est encore enregistré pour cet établissement. La direction peut en ajouter depuis
         « Équipe ».
       </p>
@@ -50,7 +50,7 @@ export function PinLogin({ staff }: { staff: User[] }) {
                 key={member.id}
                 type="button"
                 onClick={() => setSelected(member)}
-                className="flex min-h-28 flex-col items-center justify-center gap-2.5 rounded-card bg-card p-5 text-center shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)] transition-transform active:scale-[0.97] hover:bg-muted/60"
+                className="flex min-h-28 flex-col items-center justify-center gap-2.5 rounded-lg border border-border bg-card p-5 text-center transition-transform active:scale-[0.97] hover:bg-muted/60"
               >
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-accent">
                   <Icon className="h-6 w-6" />
@@ -84,7 +84,7 @@ export function PinLogin({ staff }: { staff: User[] }) {
               setSelected(null);
               setPin("");
             }}
-            className="min-h-11 rounded-pill px-4 text-sm font-medium text-accent hover:bg-accent/10"
+            className="min-h-11 rounded-md px-4 text-sm font-medium text-accent hover:bg-accent/10"
           >
             Changer
           </button>
@@ -123,7 +123,7 @@ export function PinLogin({ staff }: { staff: User[] }) {
                 else if (pin.length < PIN_LENGTH) setPin((p) => p + key);
               }}
               className={cn(
-                "flex h-16 items-center justify-center rounded-card text-2xl font-semibold transition-transform active:scale-95 select-none touch-manipulation",
+                "flex h-16 items-center justify-center rounded-lg text-2xl font-semibold transition-transform active:scale-95 select-none touch-manipulation",
                 isDelete ? "text-muted-foreground hover:bg-muted" : "bg-card text-foreground shadow-sm hover:bg-muted/60"
               )}
             >

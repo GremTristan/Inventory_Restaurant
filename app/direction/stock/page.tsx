@@ -52,7 +52,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
               const own = all.filter((i) => i.siteId === s.id);
               const low = own.filter(isLowStock);
               return (
-                <a key={s.id} href={`/direction/stock?site=${s.id}`} className="rounded-card bg-card p-5 shadow-sm hover:bg-muted/40">
+                <a key={s.id} href={`/direction/stock?site=${s.id}`} className="rounded-lg border border-border bg-card p-4 hover:bg-muted/40">
                   <h3 className="text-lg font-bold text-foreground">{s.name}</h3>
                   <p className="text-[20px] font-bold tracking-tight tabular-nums">{formatMoney(value(own), tenant.currency)}</p>
                   <p className="text-sm text-muted-foreground">
@@ -62,7 +62,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
                   {low.length > 0 && (
                     <ul className="mt-2 flex flex-wrap gap-1.5">
                       {low.slice(0, 6).map((i) => (
-                        <li key={i.id} className="rounded-pill bg-destructive/10 px-2.5 py-1 text-xs font-semibold text-destructive">
+                        <li key={i.id} className="rounded-md bg-destructive/10 px-2.5 py-1 text-xs font-semibold text-destructive">
                           {i.name}
                         </li>
                       ))}
@@ -72,11 +72,11 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
               );
             })}
           </section>
-          <section className="mt-8 rounded-card bg-card p-5 shadow-sm">
+          <section className="mt-8 rounded-lg border border-border bg-card p-4">
             <h2 className="mb-3 text-base font-bold text-foreground">Fournisseurs</h2>
             <ul className="mb-3 flex flex-wrap gap-2">
               {suppliers.map((s) => (
-                <li key={s.id} className="flex items-center gap-1 rounded-pill bg-muted pl-4 pr-1 text-sm font-medium">
+                <li key={s.id} className="flex items-center gap-1 rounded-md bg-muted pl-4 pr-1 text-sm font-medium">
                   {s.name}
                   <DeleteButton action={deleteSupplierAction} fields={{ id: s.id }} variant="ghost" size="icon" className="h-9 w-9" confirmLabel="OK ?" aria-label={`Supprimer ${s.name}`}>
                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -95,7 +95,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
         </>
       ) : (
         <>
-          <section className="mb-8 rounded-card bg-card p-5 shadow-sm">
+          <section className="mb-8 rounded-lg border border-border bg-card p-4">
             <h2 className="mb-3 text-base font-bold text-foreground">Ajouter un article — {site.name}</h2>
             <CreateForm action={addInventoryItemAction} submitLabel="Ajouter" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_6rem_9rem_6rem_7rem_7rem_auto] lg:items-end">
               <input type="hidden" name="siteId" value={site.id} />
@@ -145,7 +145,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
                   </h2>
                   <ul className="space-y-2">
                     {group.map((item) => (
-                      <li key={item.id} className="rounded-card bg-card p-3 shadow-sm">
+                      <li key={item.id} className="rounded-lg border border-border bg-card p-3 shadow-sm">
                         <AutoSaveForm action={updateInventoryItemAction} className="grid grid-cols-2 items-end gap-2 sm:grid-cols-3 lg:grid-cols-[1fr_6rem_7rem_7rem_10rem_8rem_auto]">
                           <input type="hidden" name="id" value={item.id} />
                           <label className="col-span-2 block text-xs text-muted-foreground sm:col-span-3 lg:col-span-1">

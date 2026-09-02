@@ -31,18 +31,18 @@ export default async function SiteLayout({
   return (
     <BrandScope tenant={tenant}>
       <div className="flex min-h-screen flex-col bg-background">
-        <header className="no-print sticky top-0 z-30 flex items-center gap-3 border-b border-border/80 bg-card/90 px-4 py-3 backdrop-blur-xl sm:px-6">
+        <header className="no-print sticky top-0 z-30 flex h-12 items-center gap-3 border-b border-border bg-card px-4 sm:px-5">
           {user.role === "director" && (
             <Link
               href="/direction"
-              className="flex h-10 w-10 items-center justify-center rounded-pill text-muted-foreground hover:bg-muted"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
               aria-label="Retour à la direction"
             >
-              <ArrowLeft className="h-[18px] w-[18px]" />
+              <ArrowLeft className="h-4 w-4" />
             </Link>
           )}
           <BrandMark tenant={tenant} href={tabs[0]?.href ?? "/connexion"} className="min-w-0" />
-          <span className="hidden rounded-pill bg-muted px-3 py-1 text-[13px] font-semibold text-foreground sm:inline">
+          <span className="hidden rounded-md border border-border bg-muted px-2 py-0.5 font-mono text-[11px] text-muted-foreground sm:inline">
             {site.name}
           </span>
           <div className="hidden flex-1 justify-center lg:flex">
@@ -50,22 +50,22 @@ export default async function SiteLayout({
           </div>
           <div className="ml-auto flex items-center gap-2">
             <span className="hidden text-right sm:block">
-              <span className="block text-[14px] font-semibold leading-tight tracking-tight text-foreground">{user.name}</span>
-              <span className="block text-[12px] leading-tight text-muted-foreground">{ROLE_LABELS[user.role]}</span>
+              <span className="block text-[12px] font-medium leading-tight text-foreground">{user.name}</span>
+              <span className="block text-[11px] leading-tight text-muted-foreground">{ROLE_LABELS[user.role]}</span>
             </span>
             <form action={logoutAction}>
               <button
                 type="submit"
-                className="flex h-10 items-center gap-2 rounded-pill px-3 text-[13px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="flex h-8 items-center gap-1.5 rounded-md px-2 text-[12px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
                 aria-label="Se déconnecter"
               >
-                <LogOut className="h-[18px] w-[18px]" />
-                <span className="hidden sm:inline">Quitter</span>
+                <LogOut className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Logout</span>
               </button>
             </form>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-5 sm:px-6 lg:pb-10">{children}</main>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-20 pt-4 sm:px-5 lg:pb-8">{children}</main>
         <div className="lg:hidden">
           <StaffNav tabs={tabs} />
         </div>

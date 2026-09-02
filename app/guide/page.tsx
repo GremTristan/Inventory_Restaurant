@@ -43,7 +43,7 @@ export default function GuidePage() {
 
       <ol className="mt-8 space-y-4">
         {STEPS.map((step, i) => (
-          <li key={step.title} className="flex gap-4 rounded-card bg-card p-5 shadow-sm">
+          <li key={step.title} className="flex gap-4 rounded-lg border border-border bg-card p-4">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-base font-bold text-accent-foreground">{i + 1}</span>
             <div>
               <div className="flex flex-wrap items-baseline gap-x-3">
@@ -59,7 +59,7 @@ export default function GuidePage() {
       <section className="mt-12">
         <h2 className="text-xl font-bold text-foreground">Au quotidien</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-card bg-card p-5 shadow-sm">
+          <div className="rounded-lg border border-border bg-card p-4">
             <h3 className="font-bold text-foreground">Serveur</h3>
             <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
               <li>Prénom → code à 4 chiffres</li>
@@ -69,7 +69,7 @@ export default function GuidePage() {
               <li>Caisse → commande → mode de paiement → « Encaisser »</li>
             </ol>
           </div>
-          <div className="rounded-card bg-card p-5 shadow-sm">
+          <div className="rounded-lg border border-border bg-card p-4">
             <h3 className="font-bold text-foreground">Cuisinier</h3>
             <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
               <li>Prénom → code à 4 chiffres</li>
@@ -78,7 +78,7 @@ export default function GuidePage() {
               <li>Onglet Stock : alertes rouges en haut, comptage avec + / −</li>
             </ol>
           </div>
-          <div className="rounded-card bg-card p-5 shadow-sm">
+          <div className="rounded-lg border border-border bg-card p-4">
             <h3 className="font-bold text-foreground">Direction</h3>
             <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
               <li>Tableau de bord : CA du jour, ruptures, top produits</li>
@@ -90,7 +90,7 @@ export default function GuidePage() {
         </div>
       </section>
 
-      <section className="mt-12 rounded-card bg-accent/10 p-6">
+      <section className="mt-12 rounded-md bg-accent/10 p-6">
         <h2 className="text-lg font-bold text-foreground">Le wifi coupe en cuisine ?</h2>
         <p className="mt-2 text-sm text-foreground">
           L’écran cuisine et le stock continuent de fonctionner : « Prêt » et les ajustements de stock sont enregistrés sur la tablette et envoyés

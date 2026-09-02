@@ -39,7 +39,7 @@ export default async function AdminHome() {
         <Stat label="Abonnés sans activité (14 j)" value={String(atRisk)} tone={atRisk ? "warning" : undefined} />
       </div>
 
-      <section className="mt-6 rounded-card bg-card p-4 shadow-sm">
+      <section className="mt-6 rounded-lg border border-border bg-card p-4">
         <CreateForm action={lookupTenantByEmailAction} submitLabel="Ouvrir" resetOnSuccess={false} className="flex flex-wrap items-end gap-3">
           <label className="min-w-64 flex-1 text-sm font-medium">
             <span className="flex items-center gap-2">
@@ -50,7 +50,7 @@ export default async function AdminHome() {
         </CreateForm>
       </section>
 
-      <section className="mt-6 overflow-hidden rounded-card bg-card shadow-sm">
+      <section className="mt-6 overflow-hidden rounded-lg border border-border bg-card">
         <table className="w-full text-sm">
           <thead className="bg-muted/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
@@ -83,7 +83,7 @@ export default async function AdminHome() {
                     <p className="text-xs text-muted-foreground">{tenant.billingEmail ?? tenant.slug}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`inline-flex rounded-pill px-2.5 py-1 text-xs font-semibold ${status.tone}`}>
+                    <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold ${status.tone}`}>
                       {status.label}
                       {days !== null ? ` · ${days} j` : ""}
                     </span>

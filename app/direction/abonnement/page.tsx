@@ -35,12 +35,12 @@ export default async function AbonnementPage({ searchParams }: { searchParams: P
       <PageHeader title="Abonnement" description="Facturé mensuellement, par établissement actif. Sans engagement : résiliable à tout moment." />
 
       {succes === "1" && (
-        <p className="mb-4 rounded-card bg-success/10 px-4 py-3 text-sm font-semibold text-success">
+        <p className="mb-4 rounded-md bg-success/10 px-4 py-3 text-sm font-semibold text-success">
           Merci ! Votre abonnement est en cours d’activation — cela prend quelques secondes.
         </p>
       )}
       {!isTenantUsable(tenant) && (
-        <p className="mb-4 rounded-card bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
+        <p className="mb-4 rounded-lg bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
           L’accès de vos équipes est bloqué tant que l’abonnement n’est pas actif.
         </p>
       )}
@@ -53,7 +53,7 @@ export default async function AbonnementPage({ searchParams }: { searchParams: P
       </div>
 
       {subscribed && configured && (
-        <section className="mt-6 rounded-card bg-card p-5 shadow-sm">
+        <section className="mt-6 rounded-lg border border-border bg-card p-4">
           <h2 className="text-base font-bold text-foreground">Gérer mon abonnement</h2>
           <p className="mt-1 text-sm text-muted-foreground">Changer de carte, télécharger les factures, modifier ou résilier — via notre partenaire de paiement sécurisé.</p>
           <form action={openPortalAction} className="mt-3">
@@ -65,37 +65,55 @@ export default async function AbonnementPage({ searchParams }: { searchParams: P
       )}
 
       <section className="mt-8">
-        <h2 className="mb-3 text-lg font-bold text-foreground">{subscribed ? "Changer de formule" : "Choisir une formule"}</h2>
+        <h2 className="mb-3 text-[15px] font-semibold tracking-tight text-foreground">{subscribed ? "Changer de formule" : "Choisir une formule"}</h2>
         {!configured && (
-          <p className="mb-3 rounded-card bg-warning/10 px-4 py-3 text-sm text-warning">
+          <p className="mb-3 rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-[13px] text-warning">
             Le paiement en ligne n’est pas encore activé sur cette installation. Contactez-nous pour souscrire.
           </p>
         )}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2">
           {PLANS.map((plan) => {
             const isCurrent = subscribed && plan.id === tenant.plan;
+            const isPro = plan.id === "pro";
             return (
-              <article key={plan.id} className={cn("flex flex-col rounded-card border-2 bg-card p-6 shadow-sm", plan.id === "pro" ? "border-accent" : "border-transparent")}>
+              <article
+                key={plan.id}
+                className={cn(
+                  "flex flex-col rounded-lg border p-5",
+                  isPro ? "border-foreground bg-foreground text-background" : "border-border bg-card text-foreground"
+                )}
+              >
                 <div className="flex items-baseline justify-between">
-                  <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
-                  {plan.id === "pro" && <span className="rounded-pill bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">Recommandé</span>}
+                  <h3 className="text-[15px] font-semibold">{plan.name}</h3>
+                  {isPro && (
+                    <span className="rounded-md bg-background/15 px-2 py-0.5 text-[11px] font-medium text-background">Recommandé</span>
+                  )}
                 </div>
-                <p className="text-sm text-muted-foreground">{plan.tagline}</p>
-                <p className="mt-4 text-3xl font-bold text-foreground">
-                  {plan.pricePerSite} CHF <span className="text-base font-medium text-muted-foreground">/ mois / établissement</span>
+                <p className={cn("mt-0.5 text-[13px]", isPro ? "text-zinc-400" : "text-muted-foreground")}>{plan.tagline}</p>
+                <p className="mt-4 font-mono text-3xl font-semibold tracking-tight">
+                  {plan.pricePerSite} CHF{" "}
+                  <span className={cn("text-[13px] font-medium", isPro ? "text-zinc-400" : "text-muted-foreground")}>/ mois / site</span>
                 </p>
-                <ul className="mt-4 flex-1 space-y-2 text-sm">
+                <ul className="mt-4 flex-1 space-y-2 text-[13px]">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" /> {f}
+                      <Check className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", isPro ? "text-zinc-300" : "text-success")} /> {f}
                     </li>
                   ))}
                 </ul>
-                {/* Plan changes on a live subscription go through the Stripe
-                    portal (prorated) rather than a second checkout. */}
                 <form action={subscribed ? openPortalAction : startCheckoutAction} className="mt-6">
                   {!subscribed && <input type="hidden" name="plan" value={plan.id} />}
-                  <Button type="submit" size="lg" variant={plan.id === "pro" ? "primary" : "secondary"} className="w-full" disabled={!configured}>
+                  <Button
+                    type="submit"
+                    size="md"
+                    className={cn(
+                      "w-full",
+                      isPro
+                        ? "bg-background text-foreground hover:bg-zinc-100"
+                        : "bg-foreground text-background hover:bg-foreground/90"
+                    )}
+                    disabled={!configured}
+                  >
                     {isCurrent
                       ? "Formule actuelle — gérer"
                       : subscribed

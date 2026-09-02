@@ -77,7 +77,7 @@ export function Till({
         <section className="flex w-full flex-col gap-2 lg:w-80 lg:shrink-0">
           <h1 className="text-[17px] font-bold tracking-tight text-foreground">À encaisser ({payable.length})</h1>
           {payable.length === 0 && (
-            <p className="rounded-card bg-card p-6 text-center text-sm text-muted-foreground shadow-sm">
+            <p className="rounded-lg border border-border bg-card p-6 text-center text-sm text-muted-foreground shadow-sm">
               Toutes les commandes sont encaissées.
             </p>
           )}
@@ -90,7 +90,7 @@ export function Till({
                 setJustPaid(null);
               }}
               className={cn(
-                "flex min-h-12 items-center justify-between rounded-card border bg-card px-3 py-2.5 text-left shadow-sm",
+                "flex min-h-12 items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5 text-left shadow-sm",
                 effectiveId === order.id ? "border-accent" : "border-transparent"
               )}
             >
@@ -109,7 +109,7 @@ export function Till({
         {/* Payment panel */}
         <section className="flex-1">
           {justPaid && !selected ? (
-            <div className="flex flex-col items-center gap-3 rounded-card bg-card p-5 text-center shadow-sm">
+            <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-card p-5 text-center shadow-sm">
               <CheckCircle2 className="h-10 w-10 text-success" />
               <p className="text-[17px] font-bold tracking-tight text-foreground">Commande n° {justPaid.number} encaissée</p>
               <p className="text-lg text-muted-foreground">
@@ -118,7 +118,7 @@ export function Till({
               <div className="flex flex-wrap justify-center gap-3">
                 <Link
                   href={`/s/${siteId}/caisse/ticket/${justPaid.id}`}
-                  className="flex min-h-10 items-center gap-1.5 rounded-pill bg-muted px-4 text-[13px] font-semibold text-foreground"
+                  className="flex min-h-10 items-center gap-1.5 rounded-md bg-muted px-4 text-[13px] font-semibold text-foreground"
                 >
                   <Receipt className="h-5 w-5" /> Ticket
                 </Link>
@@ -129,7 +129,7 @@ export function Till({
                       setJustPaid(null);
                       setSelectedId(payable[0].id);
                     }}
-                    className="flex min-h-10 items-center rounded-pill bg-accent px-4 text-[13px] font-semibold text-accent-foreground"
+                    className="flex min-h-10 items-center rounded-md bg-accent px-4 text-[13px] font-semibold text-accent-foreground"
                   >
                     Commande suivante
                   </button>
@@ -137,7 +137,7 @@ export function Till({
               </div>
             </div>
           ) : selected ? (
-            <div className="rounded-card bg-card p-5 shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-4">
               <header className="flex items-center justify-between">
                 <span className="text-[17px] font-bold tracking-tight">Commande n° {selected.number}</span>
                 <span className="text-sm text-muted-foreground">
@@ -166,7 +166,7 @@ export function Till({
                     type="button"
                     onClick={() => pay(selected, method)}
                     className={cn(
-                      "flex min-h-14 flex-col items-center justify-center gap-1.5 rounded-card text-[13px] font-bold tracking-tight lg:min-h-20 lg:text-[15px] text-white shadow-sm transition-transform active:scale-[0.96] select-none touch-manipulation",
+                      "flex min-h-14 flex-col items-center justify-center gap-1.5 rounded-lg text-[13px] font-bold tracking-tight lg:min-h-20 lg:text-[15px] text-white shadow-sm transition-transform active:scale-[0.96] select-none touch-manipulation",
                       tone
                     )}
                   >
@@ -177,13 +177,13 @@ export function Till({
               </div>
             </div>
           ) : (
-            <div className="rounded-card bg-card p-5 text-center text-[13px] text-muted-foreground shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-5 text-center text-[13px] text-muted-foreground">
               Sélectionnez une commande à gauche.
             </div>
           )}
 
           {/* Day summary */}
-          <div className="mt-4 rounded-card bg-card p-5 shadow-sm">
+          <div className="mt-4 rounded-lg border border-border bg-card p-4">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Aujourd’hui</p>

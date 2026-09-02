@@ -126,7 +126,7 @@ export function RecipeEditor({
                   <button
                     type="button"
                     onClick={() => setAdding(true)}
-                    className="flex min-h-10 items-center gap-1 rounded-pill bg-muted px-3 text-xs font-semibold text-foreground hover:bg-border/60"
+                    className="flex min-h-10 items-center gap-1 rounded-md bg-muted px-3 text-xs font-semibold text-foreground hover:bg-border/60"
                   >
                     <Plus className="h-4 w-4" /> Ajouter un ingrédient
                   </button>

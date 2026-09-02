@@ -24,7 +24,7 @@ export default async function TicketPage({ params }: { params: Promise<{ siteId:
         </Link>
         <PrintButton />
       </div>
-      <article className="rounded-card bg-card p-6 font-mono text-sm shadow-sm print:shadow-none">
+      <article className="rounded-lg border border-border bg-card p-6 font-mono text-sm shadow-sm print:shadow-none">
         <header className="text-center">
           <p className="text-lg font-bold">{tenant.legalName ?? tenant.name}</p>
           <p className="text-muted-foreground">{site.name}</p>

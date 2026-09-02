@@ -12,7 +12,7 @@ export default async function AdminAccountPage() {
   return (
     <>
       <PageHeader title="Mon compte" description={`${user.name} · ${user.email}`} />
-      <section className="max-w-xl rounded-card bg-card p-5 shadow-sm">
+      <section className="max-w-xl rounded-lg border border-border bg-card p-4">
         <h2 className="text-base font-bold">Mot de passe</h2>
         <CreateForm action={changeOwnPasswordAction} submitLabel="Changer le mot de passe" className="mt-4 grid gap-4">
           <label className="block text-sm font-medium">

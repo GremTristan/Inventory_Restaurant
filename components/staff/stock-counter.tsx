@@ -55,13 +55,13 @@ export function StockCounter({
       <OfflineBanner pending={pending} />
 
       {low.length > 0 && (
-        <section className="rounded-card border-2 border-destructive/40 bg-card p-4 shadow-sm">
+        <section className="rounded-lg border border-destructive/40 bg-card p-4 shadow-sm">
           <h2 className="flex items-center gap-2 text-lg font-bold text-destructive">
             <AlertTriangle className="h-5 w-5" /> À commander ({low.length})
           </h2>
           <ul className="mt-2 flex flex-wrap gap-2">
             {low.map((item) => (
-              <li key={item.id} className="rounded-pill bg-destructive/10 px-3 py-1.5 text-sm font-semibold text-destructive">
+              <li key={item.id} className="rounded-md bg-destructive/10 px-3 py-1.5 text-sm font-semibold text-destructive">
                 {item.name} · {formatQty(item.quantity)} {item.unit}
               </li>
             ))}
@@ -76,26 +76,26 @@ export function StockCounter({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Chercher un article…"
-            className="min-h-10 w-full rounded-pill bg-card pl-10 pr-3 text-[15px] shadow-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
+            className="min-h-10 w-full rounded-md bg-card pl-10 pr-3 text-[15px] shadow-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
         </label>
         {due ? (
           <button
             type="button"
             onClick={markInventoryDone}
-            className="flex min-h-10 items-center justify-center gap-1.5 rounded-pill bg-warning px-3.5 text-[13px] font-semibold text-warning-foreground"
+            className="flex min-h-10 items-center justify-center gap-1.5 rounded-md bg-warning px-3.5 text-[13px] font-semibold text-warning-foreground"
           >
             <ClipboardCheck className="h-5 w-5" /> Inventaire du mois : marquer comme fait
           </button>
         ) : (
-          <span className="flex min-h-10 items-center gap-1.5 rounded-pill bg-card px-3.5 text-[13px] font-medium text-success shadow-sm">
+          <span className="flex min-h-10 items-center gap-1.5 rounded-md bg-card px-3.5 text-[13px] font-medium text-success shadow-sm">
             <CheckCircle2 className="h-5 w-5" /> Inventaire du mois fait
           </span>
         )}
       </div>
 
       {items.length === 0 && (
-        <p className="rounded-card bg-card p-5 text-center text-[13px] text-muted-foreground shadow-sm">
+        <p className="rounded-lg border border-border bg-card p-5 text-center text-[13px] text-muted-foreground">
           Aucun article de stock. La direction peut en ajouter depuis « Stock ».
         </p>
       )}
@@ -113,7 +113,7 @@ export function StockCounter({
                   <li
                     key={item.id}
                     className={cn(
-                      "flex items-center gap-3 rounded-card border-2 bg-card p-3 shadow-sm",
+                      "flex items-center gap-3 rounded-lg border bg-card p-3 shadow-sm",
                       lowItem ? "border-destructive/50" : "border-transparent"
                     )}
                   >
@@ -129,7 +129,7 @@ export function StockCounter({
                         type="button"
                         aria-label="Moins un"
                         onClick={() => setQuantity(item, item.quantity - 1)}
-                        className="flex h-10 w-10 items-center justify-center rounded-pill bg-muted text-foreground active:scale-95"
+                        className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-foreground active:scale-95"
                       >
                         <Minus className="h-5 w-5" />
                       </button>
@@ -165,7 +165,7 @@ export function StockCounter({
                         type="button"
                         aria-label="Plus un"
                         onClick={() => setQuantity(item, item.quantity + 1)}
-                        className="flex h-10 w-10 items-center justify-center rounded-pill bg-muted text-foreground active:scale-95"
+                        className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-foreground active:scale-95"
                       >
                         <Plus className="h-5 w-5" />
                       </button>

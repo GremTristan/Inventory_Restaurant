@@ -46,7 +46,7 @@ export default async function MenuPage({ searchParams }: { searchParams: Promise
       />
       <SiteTabs sites={sites} current={site.id} basePath="/direction/menu" />
 
-      <section className="mb-8 rounded-card bg-card p-5 shadow-sm">
+      <section className="mb-8 rounded-lg border border-border bg-card p-4">
         <h2 className="mb-3 text-base font-bold text-foreground">Ajouter un produit</h2>
         <CreateForm action={addMenuItemAction} submitLabel="Ajouter" className="grid gap-3 sm:grid-cols-[1fr_8rem_10rem_auto] sm:items-end">
           <input type="hidden" name="siteId" value={site.id} />
@@ -82,7 +82,7 @@ export default async function MenuPage({ searchParams }: { searchParams: Promise
               <h2 className="mb-2 text-base font-bold text-muted-foreground">{MENU_CATEGORY_LABELS[category]}</h2>
               <ul className="space-y-2">
                 {items.map((item) => (
-                  <li key={item.id} className="rounded-card bg-card p-3 shadow-sm">
+                  <li key={item.id} className="rounded-lg border border-border bg-card p-3 shadow-sm">
                     <div className="flex flex-wrap items-center gap-2">
                       <AutoSaveForm action={updateMenuItemAction} className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                         <input type="hidden" name="id" value={item.id} />

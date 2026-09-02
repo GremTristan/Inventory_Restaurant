@@ -23,7 +23,7 @@ export default async function EtablissementsPage() {
         description="Chaque point de vente a son code tablette : saisi une fois sur la tablette, il donne accès au pavé de connexion de l’équipe."
       />
 
-      <section className="mb-8 rounded-card bg-card p-5 shadow-sm">
+      <section className="mb-8 rounded-lg border border-border bg-card p-4">
         <h2 className="mb-3 text-base font-bold text-foreground">Ouvrir un nouvel établissement</h2>
         <CreateForm action={addSiteAction} submitLabel="Créer" className="flex flex-wrap items-end gap-3">
           <label className="block min-w-64 flex-1 text-sm font-medium">
@@ -38,7 +38,7 @@ export default async function EtablissementsPage() {
         {sites.map((site) => {
           const team = users.filter((u) => u.siteId === site.id && u.active).length;
           return (
-            <li key={site.id} className={cn("rounded-card bg-card p-5 shadow-sm", !site.active && "opacity-60")}>
+            <li key={site.id} className={cn("rounded-lg border border-border bg-card p-4", !site.active && "opacity-60")}>
               <AutoSaveForm action={updateSiteAction}>
                 <input type="hidden" name="id" value={site.id} />
                 <Input name="name" defaultValue={site.name} aria-label="Nom de l’établissement" className="min-h-11 text-lg font-bold" />
@@ -59,10 +59,10 @@ export default async function EtablissementsPage() {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <Link href={`/direction/equipe?site=${site.id}`} className="min-h-11 inline-flex items-center rounded-pill bg-muted px-4 text-sm font-medium hover:bg-border/60">
+                <Link href={`/direction/equipe?site=${site.id}`} className="min-h-11 inline-flex items-center rounded-md bg-muted px-4 text-sm font-medium hover:bg-border/60">
                   Équipe
                 </Link>
-                <Link href={`/direction/menu?site=${site.id}`} className="min-h-11 inline-flex items-center rounded-pill bg-muted px-4 text-sm font-medium hover:bg-border/60">
+                <Link href={`/direction/menu?site=${site.id}`} className="min-h-11 inline-flex items-center rounded-md bg-muted px-4 text-sm font-medium hover:bg-border/60">
                   Menu
                 </Link>
                 <ActionButton

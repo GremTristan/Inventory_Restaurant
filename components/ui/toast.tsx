@@ -54,7 +54,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <div
               key={toast.id}
               className={cn(
-                "flex items-center gap-2 rounded-pill px-4 py-2.5 text-[14px] font-semibold shadow-lg animate-[toast-in_.2s_ease-out]",
+                "flex items-center gap-2 rounded-md px-4 py-2.5 text-[14px] font-semibold shadow-lg animate-[toast-in_.2s_ease-out]",
                 STYLES[toast.kind]
               )}
             >

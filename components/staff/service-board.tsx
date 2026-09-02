@@ -15,7 +15,7 @@ function OrderLabel({ order }: { order: Order }) {
   return (
     <span className="flex items-center gap-2">
       <span className="text-[17px] font-bold tracking-tight tabular-nums text-foreground">n° {order.number}</span>
-      <span className="flex items-center gap-1 rounded-pill bg-muted px-2 py-0.5 text-[11px] font-semibold text-foreground">
+      <span className="flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold text-foreground">
         {order.kind === "takeaway" ? <ShoppingBag className="h-4 w-4" /> : <Utensils className="h-4 w-4" />}
         {order.kind === "takeaway" ? "À emporter" : order.tableLabel ? `Table ${order.tableLabel}` : "Table"}
       </span>
@@ -40,11 +40,11 @@ function Column({
     <section className="flex min-w-0 flex-1 flex-col gap-3">
       <h2 className={cn("flex items-center gap-2 text-[15px] font-bold tracking-tight", tone)}>
         {title}
-        <span className="rounded-pill bg-card px-2.5 py-0.5 text-sm shadow-sm">{orders.length}</span>
+        <span className="rounded-md bg-card px-2.5 py-0.5 text-sm shadow-sm">{orders.length}</span>
       </h2>
-      {orders.length === 0 && <p className="rounded-card bg-card/60 p-4 text-sm text-muted-foreground">—</p>}
+      {orders.length === 0 && <p className="rounded-lg border border-dashed border-border bg-card/60 p-4 text-sm text-muted-foreground">—</p>}
       {orders.map((order) => (
-        <article key={order.id} className="rounded-card bg-card p-5 shadow-sm">
+        <article key={order.id} className="rounded-lg border border-border bg-card p-4">
           <header className="flex items-start justify-between gap-2">
             <OrderLabel order={order} />
             <span className="text-sm text-muted-foreground">{formatTime(order.createdAt)}</span>
@@ -101,16 +101,16 @@ export function ServiceBoard({
       <OfflineBanner pending={pending} />
       <Link
         href={`/s/${siteId}/commande`}
-        className="flex min-h-11 items-center justify-center gap-2 rounded-card bg-accent text-[15px] font-bold tracking-tight text-accent-foreground lg:min-h-14 lg:text-base shadow-sm transition-transform active:scale-[0.98]"
+        className="flex h-10 items-center justify-center gap-2 rounded-md bg-foreground text-[13px] font-medium tracking-tight text-background hover:bg-foreground/90"
       >
-        <Plus className="h-5 w-5" /> Nouvelle commande
+        <Plus className="h-4 w-4" /> Nouvelle commande
       </Link>
 
       {active.length === 0 ? (
-        <div className="rounded-card bg-card p-6 text-center shadow-sm">
-          <Utensils className="mx-auto h-10 w-10 text-muted-foreground" />
-          <p className="mt-3 text-lg font-semibold text-foreground">Aucune commande en cours</p>
-          <p className="text-sm text-muted-foreground">Touchez « Nouvelle commande » pour démarrer le service.</p>
+        <div className="rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
+          <Utensils className="mx-auto h-6 w-6 text-muted-foreground" />
+          <p className="mt-3 text-[14px] font-semibold tracking-tight text-foreground">Aucune commande en cours</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">Touchez « Nouvelle commande » pour démarrer le service.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-4 lg:flex-row">
@@ -119,7 +119,7 @@ export function ServiceBoard({
               <>
                 <Link
                   href={`/s/${siteId}/commande?commande=${order.id}`}
-                  className="flex min-h-12 items-center gap-2 rounded-pill bg-muted px-4 text-sm font-semibold text-foreground"
+                  className="flex min-h-12 items-center gap-2 rounded-md bg-muted px-4 text-sm font-semibold text-foreground"
                 >
                   <Plus className="h-4 w-4" /> Ajouter
                 </Link>
@@ -127,7 +127,7 @@ export function ServiceBoard({
                   type="button"
                   onClick={() => (confirmCancel === order.id ? cancel(order) : setConfirmCancel(order.id))}
                   className={cn(
-                    "flex min-h-12 items-center gap-2 rounded-pill px-4 text-sm font-semibold",
+                    "flex min-h-12 items-center gap-2 rounded-md px-4 text-sm font-semibold",
                     confirmCancel === order.id ? "bg-destructive text-destructive-foreground" : "text-destructive hover:bg-destructive/10"
                   )}
                 >

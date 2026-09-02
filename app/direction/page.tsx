@@ -51,19 +51,19 @@ export default async function DirectionHome({ searchParams }: { searchParams: Pr
       <PageHeader title={`Bonjour ${user.name.split(" ")[0]}`} description={`${tenant.name} · ${formatDayLabel(today)}`} />
 
       {showChecklist && (
-        <section className="mb-8 rounded-card border border-accent/30 bg-accent/5 p-5">
-          <h2 className="text-lg font-bold text-foreground">Mise en route</h2>
-          <p className="text-sm text-muted-foreground">Cinq étapes, dix minutes, et votre équipe prend ses premières commandes.</p>
+        <section className="mb-8 rounded-lg border border-border bg-card p-5">
+          <h2 className="text-[15px] font-semibold tracking-tight text-foreground">Mise en route</h2>
+          <p className="mt-0.5 text-[13px] text-muted-foreground">Cinq étapes, dix minutes, et votre équipe prend ses premières commandes.</p>
           <ul className="mt-4 grid gap-2 sm:grid-cols-2">
             {steps.map((step) => (
               <li key={step.label}>
                 <Link
                   href={step.href}
-                  className="flex min-h-12 items-center gap-3 rounded-control bg-card px-3 py-2 text-sm shadow-sm hover:bg-muted/60"
+                  className="flex min-h-10 items-center gap-3 rounded-md border border-border bg-background px-3 py-2 text-[13px] hover:bg-muted/60"
                 >
-                  {step.done ? <CheckCircle2 className="h-5 w-5 shrink-0 text-success" /> : <Circle className="h-5 w-5 shrink-0 text-muted-foreground" />}
+                  {step.done ? <CheckCircle2 className="h-4 w-4 shrink-0 text-success" /> : <Circle className="h-4 w-4 shrink-0 text-muted-foreground" />}
                   <span className={step.done ? "text-muted-foreground line-through" : "font-medium text-foreground"}>{step.label}</span>
-                  <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground" />
+                  <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
                 </Link>
               </li>
             ))}
@@ -83,33 +83,37 @@ export default async function DirectionHome({ searchParams }: { searchParams: Pr
       </div>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-lg font-bold text-foreground">Par établissement — aujourd’hui</h2>
+        <h2 className="mb-3 text-[15px] font-semibold tracking-tight text-foreground">Par établissement — aujourd’hui</h2>
         <div className="grid gap-3 md:grid-cols-2">
           {activeSites.map((site, index) => {
             const rev = todayReport.bySite.find((s) => s.siteId === site.id);
             const lowHere = low.filter((i) => i.siteId === site.id).length;
             return (
-              <article key={site.id} className="rounded-card bg-card p-5 shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)]">
+              <article key={site.id} className="rounded-lg border border-border bg-card p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-lg font-bold text-foreground">{site.name}</h3>
-                    <p className="text-2xl font-bold tabular-nums text-accent">{formatMoney(rev?.total ?? 0, tenant.currency)}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <h3 className="text-[14px] font-semibold tracking-tight text-foreground">{site.name}</h3>
+                    <p className="mt-1 font-mono text-[22px] font-semibold tracking-tight tabular-nums text-foreground">
+                      {formatMoney(rev?.total ?? 0, tenant.currency)}
+                    </p>
+                    <p className="mt-1 text-[12px] text-muted-foreground">
                       {rev?.count ?? 0} ticket{(rev?.count ?? 0) > 1 ? "s" : ""} · {activeByStie[index].length} en cours
-                      {lowHere > 0 && <span className="ml-2 font-semibold text-destructive">· {lowHere} à commander</span>}
+                      {lowHere > 0 && <span className="ml-2 font-medium text-destructive">· {lowHere} à commander</span>}
                     </p>
                   </div>
-                  <span className="rounded-pill bg-muted px-3 py-1 font-mono text-sm font-bold tracking-widest">{site.deviceCode}</span>
+                  <span className="rounded-md border border-border bg-muted px-2 py-0.5 font-mono text-[11px] font-medium tracking-widest text-muted-foreground">
+                    {site.deviceCode}
+                  </span>
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2 text-sm">
-                  <Link href={`/s/${site.id}/service`} className="min-h-11 inline-flex items-center rounded-pill bg-muted px-4 font-medium hover:bg-border/60">
-                    Écran service
+                <div className="mt-4 flex flex-wrap gap-2 text-[13px]">
+                  <Link href={`/s/${site.id}/service`} className="inline-flex h-8 items-center rounded-md border border-border bg-background px-3 font-medium hover:bg-muted">
+                    Service
                   </Link>
-                  <Link href={`/s/${site.id}/cuisine`} className="min-h-11 inline-flex items-center rounded-pill bg-muted px-4 font-medium hover:bg-border/60">
-                    Écran cuisine
+                  <Link href={`/s/${site.id}/cuisine`} className="inline-flex h-8 items-center rounded-md border border-border bg-background px-3 font-medium hover:bg-muted">
+                    Cuisine
                   </Link>
-                  <Link href={`/direction/ventes?site=${site.id}`} className="min-h-11 inline-flex items-center rounded-pill px-4 font-medium text-accent hover:bg-accent/10">
-                    Rapport détaillé →
+                  <Link href={`/direction/ventes?site=${site.id}`} className="inline-flex h-8 items-center rounded-md px-3 font-medium text-accent hover:bg-accent/10">
+                    Rapport →
                   </Link>
                 </div>
               </article>
@@ -120,13 +124,13 @@ export default async function DirectionHome({ searchParams }: { searchParams: Pr
 
       {weekReport.topProducts.length > 0 && (
         <section className="mt-8">
-          <h2 className="mb-3 text-lg font-bold text-foreground">Meilleures ventes de la semaine</h2>
+          <h2 className="mb-3 text-[15px] font-semibold tracking-tight text-foreground">Meilleures ventes de la semaine</h2>
           <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
             {weekReport.topProducts.slice(0, 5).map((p, i) => (
-              <li key={p.menuItemId} className="rounded-card bg-card p-4 shadow-sm">
-                <p className="text-xs font-semibold text-muted-foreground">#{i + 1}</p>
-                <p className="truncate font-semibold text-foreground">{p.name}</p>
-                <p className="text-sm text-muted-foreground">
+              <li key={p.menuItemId} className="rounded-lg border border-border bg-card p-3.5">
+                <p className="font-mono text-[11px] font-medium text-muted-foreground">#{i + 1}</p>
+                <p className="mt-1 truncate text-[13px] font-semibold text-foreground">{p.name}</p>
+                <p className="mt-0.5 text-[12px] text-muted-foreground">
                   {p.quantity} vendus · {formatMoney(p.revenue, tenant.currency)}
                 </p>
               </li>

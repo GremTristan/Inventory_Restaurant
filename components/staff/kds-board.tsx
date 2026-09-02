@@ -125,7 +125,7 @@ export function KdsBoard({ siteId, initialQueue }: { siteId: string; initialQueu
       <OfflineBanner pending={pending} />
       <div className="flex items-center justify-between">
         <h1 className="text-[17px] font-bold tracking-tight text-foreground">
-          À préparer <span className="ml-2 rounded-pill bg-accent px-3 py-0.5 text-lg text-accent-foreground">{toPrepare.length}</span>
+          À préparer <span className="ml-2 rounded-md bg-accent px-3 py-0.5 text-lg text-accent-foreground">{toPrepare.length}</span>
         </h1>
         <button
           type="button"
@@ -134,7 +134,7 @@ export function KdsBoard({ siteId, initialQueue }: { siteId: string; initialQueu
             setMuted(next);
             localStorage.setItem("crepo.kds.muted", next ? "1" : "0");
           }}
-          className="flex h-11 items-center gap-2 rounded-pill px-4 text-sm font-medium text-muted-foreground hover:bg-card"
+          className="flex h-11 items-center gap-2 rounded-md px-4 text-sm font-medium text-muted-foreground hover:bg-card"
           aria-pressed={muted}
         >
           {muted ? <BellOff className="h-5 w-5" /> : <Bell className="h-5 w-5" />}
@@ -143,7 +143,7 @@ export function KdsBoard({ siteId, initialQueue }: { siteId: string; initialQueu
       </div>
 
       {toPrepare.length === 0 ? (
-        <div className="rounded-card bg-card p-6 text-center shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-6 text-center">
           <Utensils className="mx-auto h-10 w-10 text-muted-foreground" />
           <p className="mt-3 text-[15px] font-semibold tracking-tight text-foreground">Rien à préparer pour l’instant</p>
           <p className="text-sm text-muted-foreground">Les nouvelles commandes apparaissent ici automatiquement.</p>
@@ -156,17 +156,17 @@ export function KdsBoard({ siteId, initialQueue }: { siteId: string; initialQueu
             return (
               <article
                 key={order.id}
-                className={cn("flex flex-col rounded-card border-2 bg-card shadow-sm lg:border-4", URGENCY_CLASS[level])}
+                className={cn("flex flex-col rounded-lg border bg-card shadow-sm lg:border-4", URGENCY_CLASS[level])}
               >
                 <header className="flex items-center justify-between px-4 pt-4">
                   <div className="flex items-center gap-2">
                     <span className="text-[20px] font-bold tracking-tight tabular-nums text-foreground lg:text-2xl">n° {order.number}</span>
-                    <span className="flex items-center gap-1 rounded-pill bg-muted px-3 py-1 text-sm font-semibold text-foreground">
+                    <span className="flex items-center gap-1 rounded-md bg-muted px-3 py-1 text-sm font-semibold text-foreground">
                       {order.kind === "takeaway" ? <ShoppingBag className="h-4 w-4" /> : <Utensils className="h-4 w-4" />}
                       {order.kind === "takeaway" ? "À emporter" : order.tableLabel ? `Table ${order.tableLabel}` : "Table"}
                     </span>
                   </div>
-                  <span className={cn("rounded-pill px-3 py-1 text-base font-bold tabular-nums", URGENCY_BADGE[level])}>
+                  <span className={cn("rounded-md px-3 py-1 text-base font-bold tabular-nums", URGENCY_BADGE[level])}>
                     {minutes} min
                   </span>
                 </header>
@@ -185,7 +185,7 @@ export function KdsBoard({ siteId, initialQueue }: { siteId: string; initialQueu
                 <button
                   type="button"
                   onClick={() => flip(order, "ready")}
-                  className="m-2.5 flex min-h-11 items-center justify-center gap-2 rounded-card bg-success text-[15px] font-bold tracking-tight lg:min-h-14 lg:text-lg text-success-foreground shadow-sm transition-transform active:scale-[0.97] select-none touch-manipulation"
+                  className="m-2.5 flex min-h-11 items-center justify-center gap-2 rounded-md bg-success text-[15px] font-bold tracking-tight lg:min-h-14 lg:text-lg text-success-foreground shadow-sm transition-transform active:scale-[0.97] select-none touch-manipulation"
                 >
                   <Check className="h-5 w-5 lg:h-6 lg:w-6" /> Prête
                 </button>
@@ -200,7 +200,7 @@ export function KdsBoard({ siteId, initialQueue }: { siteId: string; initialQueu
           <h2 className="mb-3 text-lg font-bold text-muted-foreground">Prêtes, en attente du service ({ready.length})</h2>
           <div className="flex flex-wrap gap-3">
             {ready.map((order) => (
-              <div key={order.id} className="flex items-center gap-3 rounded-card bg-card px-4 py-3 shadow-sm">
+              <div key={order.id} className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
                 <span className="text-[17px] font-bold tracking-tight tabular-nums text-foreground">n° {order.number}</span>
                 <span className="text-sm text-muted-foreground">
                   {order.kind === "takeaway" ? "À emporter" : order.tableLabel ? `Table ${order.tableLabel}` : "Table"} ·{" "}
@@ -209,7 +209,7 @@ export function KdsBoard({ siteId, initialQueue }: { siteId: string; initialQueu
                 <button
                   type="button"
                   onClick={() => flip(order, "preparing")}
-                  className="flex h-11 items-center gap-1 rounded-pill px-3 text-sm font-medium text-muted-foreground hover:bg-muted"
+                  className="flex h-11 items-center gap-1 rounded-md px-3 text-sm font-medium text-muted-foreground hover:bg-muted"
                   aria-label={`Reprendre la commande ${order.number}`}
                 >
                   <RotateCcw className="h-4 w-4" /> Reprendre

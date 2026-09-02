@@ -32,7 +32,7 @@ export default async function ConnexionPage({
         <main className="flex min-h-screen flex-col items-center bg-muted/40 px-4 py-8">
           <div className="mb-6 flex w-full max-w-lg items-center justify-between">
             <BrandMark tenant={tenant} href="/connexion" />
-            <span className="rounded-pill bg-card px-3 py-1.5 text-sm font-semibold text-foreground shadow-sm">
+            <span className="rounded-md bg-card px-3 py-1.5 text-sm font-semibold text-foreground shadow-sm">
               {deviceSite.name}
             </span>
           </div>
@@ -56,39 +56,39 @@ export default async function ConnexionPage({
 
   return (
     <BrandScope tenant={tenant}>
-      <main className="flex min-h-screen flex-col items-center bg-muted/40 px-4 py-8">
+      <main className="flex min-h-screen flex-col items-center bg-background px-4 py-10">
         <div className="mb-8 w-full max-w-3xl">
           <BrandMark tenant={tenant} />
         </div>
-        <div className="grid w-full max-w-3xl gap-6 md:grid-cols-2">
-          <Card className="p-6 sm:p-8">
-            <h1 className="text-xl font-bold text-foreground">Direction</h1>
-            <p className="mb-5 mt-1 text-sm text-muted-foreground">Gérant, directeur : e-mail et mot de passe.</p>
+        <div className="grid w-full max-w-3xl gap-4 md:grid-cols-2">
+          <Card className="p-5 sm:p-6">
+            <h1 className="text-[15px] font-semibold tracking-tight text-foreground">Direction</h1>
+            <p className="mb-4 mt-1 text-[13px] text-muted-foreground">Gérant, directeur : e-mail et mot de passe.</p>
             <PasswordLoginForm next={suite} />
-            <p className="mt-5 text-center text-sm text-muted-foreground">
+            <p className="mt-4 text-center text-[13px] text-muted-foreground">
               Pas encore de compte ?{" "}
-              <Link href="/inscription" className="font-semibold text-accent hover:underline">
+              <Link href="/inscription" className="font-medium text-foreground underline-offset-2 hover:underline">
                 Essai gratuit 14 jours
               </Link>
             </p>
           </Card>
           {deviceSite ? (
-            <Card className="p-6 sm:p-8">
-              <h2 className="text-xl font-bold text-foreground">Équipe</h2>
-              <p className="mb-5 mt-1 text-sm text-muted-foreground">
+            <Card className="p-5 sm:p-6">
+              <h2 className="text-[15px] font-semibold tracking-tight text-foreground">Équipe</h2>
+              <p className="mb-4 mt-1 text-[13px] text-muted-foreground">
                 Cette tablette est reliée à <strong>{deviceSite.name}</strong>.
               </p>
               <Link
                 href="/connexion"
-                className="inline-flex min-h-14 w-full items-center justify-center rounded-pill bg-accent px-6 text-base font-semibold text-accent-foreground hover:bg-accent-hover"
+                className="inline-flex h-9 w-full items-center justify-center rounded-md bg-foreground px-4 text-[13px] font-medium text-background hover:bg-foreground/90"
               >
                 Ouvrir le pavé de connexion
               </Link>
             </Card>
           ) : (
-            <Card className="p-6 sm:p-8">
-              <h2 className="text-xl font-bold text-foreground">Tablette de l’équipe</h2>
-              <p className="mb-5 mt-1 text-sm text-muted-foreground">
+            <Card className="p-5 sm:p-6">
+              <h2 className="text-[15px] font-semibold tracking-tight text-foreground">Tablette de l’équipe</h2>
+              <p className="mb-4 mt-1 text-[13px] text-muted-foreground">
                 Une seule fois par tablette : saisissez le code de votre établissement. Ensuite, serveurs et cuisiniers
                 se connectent avec leur code à 4 chiffres.
               </p>

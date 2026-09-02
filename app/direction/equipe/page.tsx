@@ -28,7 +28,7 @@ export default async function EquipePage({ searchParams }: { searchParams: Promi
       {sites.length > 1 && <SiteTabs sites={sites} current={site?.id ?? null} basePath="/direction/equipe" />}
 
       {site && (
-        <section className="mb-8 rounded-card bg-card p-5 shadow-sm">
+        <section className="mb-8 rounded-lg border border-border bg-card p-4">
           <h2 className="mb-3 text-base font-bold text-foreground">Ajouter à l’équipe de {site.name}</h2>
           <CreateForm action={addStaffAction} submitLabel="Ajouter" className="grid gap-3 sm:grid-cols-[1fr_10rem_9rem_auto] sm:items-end">
             <input type="hidden" name="siteId" value={site.id} />
@@ -61,7 +61,7 @@ export default async function EquipePage({ searchParams }: { searchParams: Promi
           {staff.map((member) => {
             const Icon = member.role === "cook" ? ChefHat : HandPlatter;
             return (
-              <li key={member.id} className={cn("rounded-card bg-card p-4 shadow-sm", !member.active && "opacity-60")}>
+              <li key={member.id} className={cn("rounded-lg border border-border bg-card p-4", !member.active && "opacity-60")}>
                 <div className="flex items-start gap-3">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
                     <Icon className="h-5 w-5" />
@@ -69,7 +69,7 @@ export default async function EquipePage({ searchParams }: { searchParams: Promi
                   <AutoSaveForm action={updateStaffAction} className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                     <input type="hidden" name="id" value={member.id} />
                     <Input name="name" defaultValue={member.name} aria-label="Nom" className="min-h-11 min-w-32 flex-1 font-semibold" />
-                    <span className="rounded-pill bg-muted px-3 py-1.5 text-xs font-semibold">{ROLE_LABELS[member.role]}</span>
+                    <span className="rounded-md bg-muted px-3 py-1.5 text-xs font-semibold">{ROLE_LABELS[member.role]}</span>
                     {sites.length > 1 && (
                       <Select name="siteId" defaultValue={member.siteId ?? ""} aria-label="Établissement" className="min-h-11">
                         {sites.map((s) => (
@@ -111,7 +111,7 @@ export default async function EquipePage({ searchParams }: { searchParams: Promi
         <p className="mb-3 text-sm text-muted-foreground">Accès complet à tous les établissements, avec e-mail et mot de passe.</p>
         <ul className="mb-4 grid gap-2 md:grid-cols-2">
           {directors.map((d) => (
-            <li key={d.id} className="flex items-center justify-between rounded-card bg-card px-4 py-3 shadow-sm">
+            <li key={d.id} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
               <div>
                 <p className="font-semibold text-foreground">
                   {d.name} {d.id === me.id && <span className="text-xs text-muted-foreground">(vous)</span>}
@@ -132,7 +132,7 @@ export default async function EquipePage({ searchParams }: { searchParams: Promi
             </li>
           ))}
         </ul>
-        <div className="rounded-card bg-card p-5 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-4">
           <h3 className="mb-3 text-base font-bold text-foreground">Ajouter un compte direction</h3>
           <CreateForm action={inviteDirectorAction} submitLabel="Créer l’accès" className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
             <label className="block text-sm font-medium">

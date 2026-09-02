@@ -20,7 +20,7 @@ export default async function ReglagesPage() {
     <>
       <PageHeader title="Réglages" description="Identité de votre enseigne, mentions sur les tickets, sécurité et données." />
 
-      <section className="rounded-card bg-card p-5 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-4">
         <h2 className="text-base font-bold text-foreground">Enseigne et tickets</h2>
         <CreateForm action={updateBrandAction} submitLabel="Enregistrer" resetOnSuccess={false} className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block text-sm font-medium">
@@ -71,7 +71,7 @@ export default async function ReglagesPage() {
         </CreateForm>
       </section>
 
-      <section className="mt-6 rounded-card bg-card p-5 shadow-sm">
+      <section className="mt-6 rounded-lg border border-border bg-card p-4">
         <h2 className="text-base font-bold text-foreground">Mot de passe</h2>
         <CreateForm action={changePasswordAction} submitLabel="Changer le mot de passe" className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block text-sm font-medium">
@@ -85,17 +85,17 @@ export default async function ReglagesPage() {
         </CreateForm>
       </section>
 
-      <section className="mt-6 rounded-card bg-card p-5 shadow-sm">
+      <section className="mt-6 rounded-lg border border-border bg-card p-4">
         <h2 className="text-base font-bold text-foreground">Vos données</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Vos données vous appartiennent. Téléchargez-les à tout moment (format lisible par un tableur ou un développeur), ou demandez la suppression définitive de votre compte.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link href="/api/export/donnees" className="inline-flex min-h-12 items-center gap-2 rounded-pill bg-muted px-5 text-sm font-semibold text-foreground hover:bg-border/60">
+          <Link href="/api/export/donnees" className="inline-flex min-h-12 items-center gap-2 rounded-md bg-muted px-5 text-sm font-semibold text-foreground hover:bg-border/60">
             <Download className="h-4 w-4" /> Exporter toutes mes données (JSON)
           </Link>
         </div>
-        <form action={requestDeletionAction} className="mt-6 rounded-card border border-destructive/30 p-4">
+        <form action={requestDeletionAction} className="mt-6 rounded-lg border border-destructive/30 p-4">
           <h3 className="text-sm font-bold text-destructive">Supprimer le compte</h3>
           <p className="mt-1 text-xs text-muted-foreground">
             L’accès est coupé immédiatement pour toute l’enseigne ; les données sont effacées définitivement sous 30 jours (délai légal de rétractation), sauf pièces comptables conservées selon la loi.

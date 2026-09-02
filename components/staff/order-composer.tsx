@@ -110,8 +110,8 @@ export function OrderComposer({
               type="button"
               onClick={() => setCategory(c)}
               className={cn(
-                "min-h-9 shrink-0 rounded-pill px-3.5 text-[13px] font-semibold transition-colors",
-                category === c ? "bg-accent text-accent-foreground" : "bg-card text-foreground shadow-sm hover:bg-muted"
+                "min-h-9 shrink-0 rounded-md px-3.5 text-[13px] font-semibold transition-colors",
+                category === c ? "bg-foreground text-background" : "border border-border bg-card text-foreground hover:bg-muted"
               )}
             >
               {MENU_CATEGORY_LABELS[c]}
@@ -119,7 +119,7 @@ export function OrderComposer({
           ))}
         </div>
         {menu.length === 0 ? (
-          <p className="rounded-card bg-card p-5 text-center text-[13px] text-muted-foreground shadow-sm">
+          <p className="rounded-lg border border-border bg-card p-5 text-center text-[13px] text-muted-foreground">
             La carte est vide. La direction peut ajouter des produits depuis « Menu ».
           </p>
         ) : (
@@ -132,14 +132,14 @@ export function OrderComposer({
                   type="button"
                   onClick={() => add(item)}
                   className={cn(
-                    "relative flex min-h-16 flex-col items-start justify-between rounded-card border bg-card p-2.5 text-left lg:min-h-20 shadow-sm transition-transform active:scale-[0.96] select-none touch-manipulation",
+                    "relative flex min-h-16 flex-col items-start justify-between rounded-lg border border-border bg-card p-2.5 text-left lg:min-h-20 shadow-sm transition-transform active:scale-[0.96] select-none touch-manipulation",
                     qty > 0 ? "border-accent" : "border-transparent hover:border-border"
                   )}
                 >
                   <span className="text-base font-semibold leading-tight text-foreground">{item.name}</span>
                   <span className="text-sm font-medium text-muted-foreground">{formatMoney(item.price, currency)}</span>
                   {qty > 0 && (
-                    <span className="absolute right-2 top-2 flex h-8 min-w-8 items-center justify-center rounded-pill bg-accent px-2 text-base font-bold text-accent-foreground">
+                    <span className="absolute right-2 top-2 flex h-8 min-w-8 items-center justify-center rounded-md bg-accent px-2 text-base font-bold text-accent-foreground">
                       {qty}
                     </span>
                   )}
@@ -151,7 +151,7 @@ export function OrderComposer({
       </section>
 
       {/* Cart */}
-      <aside className="flex w-full flex-col rounded-card bg-card shadow-sm lg:w-96 lg:shrink-0">
+      <aside className="flex w-full flex-col rounded-lg border border-border bg-card lg:w-96 lg:shrink-0">
         {!appendTo && (
           <div className="flex flex-col gap-4 border-b border-border p-4">
             <div className="grid grid-cols-2 gap-2">
@@ -160,7 +160,7 @@ export function OrderComposer({
                 onClick={() => setKind("table")}
                 className={cn(
                   "flex min-h-10 items-center justify-center gap-1.5 rounded-control text-[13px] font-semibold",
-                  kind === "table" ? "bg-accent text-accent-foreground" : "bg-muted text-foreground"
+                  kind === "table" ? "bg-foreground text-background" : "bg-muted text-foreground"
                 )}
               >
                 <Utensils className="h-5 w-5" /> Table
@@ -170,7 +170,7 @@ export function OrderComposer({
                 onClick={() => setKind("takeaway")}
                 className={cn(
                   "flex min-h-10 items-center justify-center gap-1.5 rounded-control text-[13px] font-semibold",
-                  kind === "takeaway" ? "bg-accent text-accent-foreground" : "bg-muted text-foreground"
+                  kind === "takeaway" ? "bg-foreground text-background" : "bg-muted text-foreground"
                 )}
               >
                 <ShoppingBag className="h-5 w-5" /> À emporter
@@ -212,7 +212,7 @@ export function OrderComposer({
                     type="button"
                     onClick={() => changeQty(index, -1)}
                     aria-label="Retirer un"
-                    className="flex h-11 w-11 items-center justify-center rounded-pill bg-muted text-foreground active:scale-95"
+                    className="flex h-11 w-11 items-center justify-center rounded-md bg-muted text-foreground active:scale-95"
                   >
                     {line.quantity === 1 ? <Trash2 className="h-5 w-5" /> : <Minus className="h-5 w-5" />}
                   </button>
@@ -221,7 +221,7 @@ export function OrderComposer({
                     type="button"
                     onClick={() => changeQty(index, 1)}
                     aria-label="Ajouter un"
-                    className="flex h-11 w-11 items-center justify-center rounded-pill bg-muted text-foreground active:scale-95"
+                    className="flex h-11 w-11 items-center justify-center rounded-md bg-muted text-foreground active:scale-95"
                   >
                     <Plus className="h-5 w-5" />
                   </button>
@@ -237,7 +237,7 @@ export function OrderComposer({
                         setCart((c) => c.map((l, i) => (i === index ? { ...l, note: l.note === preset ? "" : preset } : l)));
                       }}
                       className={cn(
-                        "min-h-10 rounded-pill px-3 text-sm font-medium",
+                        "min-h-10 rounded-md px-3 text-sm font-medium",
                         line.note === preset ? "bg-warning text-warning-foreground" : "bg-muted text-foreground"
                       )}
                     >
@@ -260,7 +260,7 @@ export function OrderComposer({
             type="button"
             onClick={send}
             disabled={cart.length === 0 || sending}
-            className="flex min-h-12 w-full items-center justify-between rounded-card bg-accent px-4 lg:min-h-14 text-accent-foreground shadow-sm transition-transform active:scale-[0.98] disabled:opacity-40 select-none touch-manipulation"
+            className="flex h-11 w-full items-center justify-between rounded-md bg-foreground px-4 text-background hover:bg-foreground/90 disabled:opacity-40 select-none touch-manipulation"
           >
             <span className="flex items-center gap-2 text-lg font-bold">
               <Send className="h-6 w-6" /> {appendTo ? "Ajouter et envoyer" : "Envoyer en cuisine"}

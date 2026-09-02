@@ -5,22 +5,21 @@ type Variant = "primary" | "secondary" | "ghost" | "destructive" | "success" | "
 type Size = "sm" | "md" | "lg" | "xl" | "icon" | "icon-lg";
 
 const variantClasses: Record<Variant, string> = {
-  primary: "bg-accent text-accent-foreground hover:bg-accent-hover shadow-sm",
-  secondary: "bg-muted text-foreground hover:bg-border/50",
+  primary: "bg-accent text-accent-foreground hover:bg-accent-hover",
+  secondary: "bg-muted text-foreground hover:bg-zinc-200/80",
   ghost: "text-muted-foreground hover:bg-muted hover:text-foreground",
-  destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
-  success: "bg-success text-success-foreground hover:bg-success/90 shadow-sm",
-  outline: "border border-border bg-card text-foreground hover:border-accent hover:text-accent",
+  destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+  success: "bg-success text-success-foreground hover:bg-success/90",
+  outline: "border border-border bg-card text-foreground hover:bg-muted",
 };
 
-// Comfortable 44px+ targets with readable type — not kitchen-billboard, not cramped.
 const sizeClasses: Record<Size, string> = {
-  sm: "min-h-9 px-3 py-1.5 text-[13px] gap-1.5",
-  md: "min-h-11 px-4 py-2.5 text-[15px] gap-2",
-  lg: "min-h-12 px-5 py-3 text-[15px] gap-2",
-  xl: "min-h-12 px-5 py-3 text-[15px] font-semibold gap-2 sm:min-h-14 sm:text-base",
-  icon: "h-11 w-11 p-0",
-  "icon-lg": "h-12 w-12 p-0",
+  sm: "h-8 px-2.5 text-[12px] gap-1.5",
+  md: "h-9 px-3 text-[13px] gap-1.5",
+  lg: "h-10 px-3.5 text-[13px] gap-2",
+  xl: "h-11 px-4 text-[14px] font-medium gap-2",
+  icon: "h-9 w-9 p-0",
+  "icon-lg": "h-10 w-10 p-0",
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -38,7 +37,7 @@ export function buttonClassName({
   className?: string;
 } = {}) {
   return cn(
-    "inline-flex select-none touch-manipulation items-center justify-center rounded-pill font-semibold tracking-tight transition-[background-color,transform] duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:pointer-events-none",
+    "inline-flex select-none touch-manipulation items-center justify-center rounded-md font-medium tracking-tight transition-colors duration-100 active:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:opacity-50 disabled:pointer-events-none",
     variantClasses[variant],
     sizeClasses[size],
     className
