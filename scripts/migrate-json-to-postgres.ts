@@ -4,10 +4,19 @@ config({ path: ".env.local" });
 
 import fs from "fs";
 import path from "path";
-import { neon } from "@neondatabase/serverless";
+import { neon, neonConfig } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { put } from "@vercel/blob";
 import * as schema from "../lib/db/schema";
+
+// Mirror lib/db/client.ts: point the serverless driver at a local Neon
+// proxy when NEON_LOCAL_FETCH_ENDPOINT is set (local dev), otherwise talk
+// to Neon's cloud endpoint as usual.
+if (process.env.NEON_LOCAL_FETCH_ENDPOINT) {
+  neonConfig.fetchEndpoint = process.env.NEON_LOCAL_FETCH_ENDPOINT;
+  neonConfig.useSecureWebSocket = false;
+  neonConfig.poolQueryViaFetch = true;
+}
 
 // One-off backfill: reads the legacy data/*.json files + data/receipts/
 // images from this repo and inserts them into the new Postgres tables /
@@ -179,6 +188,15 @@ async function migrateMenuAndSales(userIdMap: Map<string, string>) {
 }
 
 async function migrateReceipts(userIdMap: Map<string, string>) {
+  // Receipt images live in Vercel Blob, so this step needs a write token.
+  // In a local dev environment without Blob configured, skip it — the rest
+  // of the app (auth, inventory, sales, menu, suppliers) is fully usable
+  // without receipts.
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.log("receipts: BLOB_READ_WRITE_TOKEN not set, skipping receipt image migration");
+    return;
+  }
+
   const existing = await db.select().from(schema.receipts).limit(1);
   if (existing.length > 0) {
     console.log("receipts: already populated, skipping");
