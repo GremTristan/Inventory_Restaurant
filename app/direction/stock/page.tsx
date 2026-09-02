@@ -1,0 +1,210 @@
+import type { Metadata } from "next";
+import { AlertTriangle, Trash2 } from "lucide-react";
+import { AutoSaveForm, CreateForm, DeleteButton } from "@/components/direction/forms";
+import { EmptyState, PageHeader, SiteTabs, Stat } from "@/components/direction/ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import {
+  addInventoryItemAction,
+  addSupplierAction,
+  deleteInventoryItemAction,
+  deleteSupplierAction,
+  updateInventoryItemAction,
+} from "@/lib/direction-actions";
+import { getInventoryBySite, getInventoryForTenant, getSuppliers, isLowStock } from "@/lib/inventory-store";
+import { formatMoney } from "@/lib/money";
+import { pageDirector } from "@/lib/page-guards";
+import { getSitesForTenant } from "@/lib/site-store";
+import { CATEGORY_LABELS, CATEGORY_ORDER } from "@/types";
+
+export const metadata: Metadata = { title: "Stock" };
+
+export default async function StockPage({ searchParams }: { searchParams: Promise<{ site?: string }> }) {
+  const { site: siteParam } = await searchParams;
+  const { tenant } = await pageDirector();
+  const sites = (await getSitesForTenant(tenant.id)).filter((s) => s.active);
+  const site = sites.find((s) => s.id === siteParam) ?? null;
+
+  const [items, suppliers, all] = await Promise.all([
+    site ? getInventoryBySite(site.id) : Promise.resolve([]),
+    getSuppliers(tenant.id),
+    getInventoryForTenant(tenant.id),
+  ]);
+  const supplierName = new Map(suppliers.map((s) => [s.id, s.name]));
+  const value = (list: typeof all) => list.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+
+  return (
+    <>
+      <PageHeader title="Stock" description="Valeur du stock, seuils d’alerte et fournisseurs. Les cuisiniers ne voient jamais les prix." />
+      <SiteTabs sites={sites} current={site?.id ?? null} basePath="/direction/stock" allLabel="Vue consolidée" />
+
+      {!site ? (
+        <>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <Stat label="Valeur totale du stock" value={formatMoney(value(all), tenant.currency)} tone="accent" />
+            <Stat label="Articles suivis" value={String(all.length)} />
+            <Stat label="À commander" value={String(all.filter(isLowStock).length)} tone={all.some(isLowStock) ? "destructive" : undefined} />
+            <Stat label="Fournisseurs" value={String(suppliers.length)} />
+          </div>
+          <section className="mt-6 grid gap-3 md:grid-cols-2">
+            {sites.map((s) => {
+              const own = all.filter((i) => i.siteId === s.id);
+              const low = own.filter(isLowStock);
+              return (
+                <a key={s.id} href={`/direction/stock?site=${s.id}`} className="rounded-card bg-card p-5 shadow-sm hover:bg-muted/40">
+                  <h3 className="text-lg font-bold text-foreground">{s.name}</h3>
+                  <p className="text-2xl font-bold tabular-nums">{formatMoney(value(own), tenant.currency)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {own.length} article{own.length > 1 ? "s" : ""}
+                    {low.length > 0 && <span className="ml-2 font-semibold text-destructive">· {low.length} à commander</span>}
+                  </p>
+                  {low.length > 0 && (
+                    <ul className="mt-2 flex flex-wrap gap-1.5">
+                      {low.slice(0, 6).map((i) => (
+                        <li key={i.id} className="rounded-pill bg-destructive/10 px-2.5 py-1 text-xs font-semibold text-destructive">
+                          {i.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </a>
+              );
+            })}
+          </section>
+          <section className="mt-8 rounded-card bg-card p-5 shadow-sm">
+            <h2 className="mb-3 text-base font-bold text-foreground">Fournisseurs</h2>
+            <ul className="mb-3 flex flex-wrap gap-2">
+              {suppliers.map((s) => (
+                <li key={s.id} className="flex items-center gap-1 rounded-pill bg-muted pl-4 pr-1 text-sm font-medium">
+                  {s.name}
+                  <DeleteButton action={deleteSupplierAction} fields={{ id: s.id }} variant="ghost" size="icon" className="h-9 w-9" confirmLabel="OK ?" aria-label={`Supprimer ${s.name}`}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </DeleteButton>
+                </li>
+              ))}
+              {suppliers.length === 0 && <li className="text-sm text-muted-foreground">Aucun fournisseur pour l’instant.</li>}
+            </ul>
+            <form action={addSupplierAction} className="flex gap-2">
+              <Input name="name" placeholder="Nouveau fournisseur" required className="min-h-11 max-w-xs" />
+              <Button type="submit" variant="secondary">
+                Ajouter
+              </Button>
+            </form>
+          </section>
+        </>
+      ) : (
+        <>
+          <section className="mb-6 rounded-card bg-card p-4 shadow-sm sm:p-5">
+            <h2 className="mb-3 text-base font-bold text-foreground">Ajouter un article — {site.name}</h2>
+            <CreateForm action={addInventoryItemAction} submitLabel="Ajouter" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_6rem_9rem_6rem_7rem_7rem_auto] lg:items-end">
+              <input type="hidden" name="siteId" value={site.id} />
+              <label className="block text-sm font-medium">
+                Nom
+                <Input name="name" required placeholder="Farine de sarrasin" className="mt-1 min-h-12" />
+              </label>
+              <label className="block text-sm font-medium">
+                Unité
+                <Input name="unit" placeholder="kg" defaultValue="pièce" className="mt-1 min-h-12" />
+              </label>
+              <label className="block text-sm font-medium">
+                Catégorie
+                <Select name="category" defaultValue="sec" className="mt-1 min-h-12 w-full">
+                  {CATEGORY_ORDER.map((c) => (
+                    <option key={c} value={c}>
+                      {CATEGORY_LABELS[c]}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+              <label className="block text-sm font-medium">
+                Quantité
+                <Input name="quantity" type="number" step="0.1" min="0" defaultValue="0" className="mt-1 min-h-12" />
+              </label>
+              <label className="block text-sm font-medium">
+                Prix d’achat
+                <Input name="unitPrice" type="number" step="0.01" min="0" defaultValue="0" className="mt-1 min-h-12" />
+              </label>
+              <label className="block text-sm font-medium">
+                Seuil d’alerte
+                <Input name="lowStockThreshold" type="number" step="0.1" min="0" placeholder="—" className="mt-1 min-h-12" />
+              </label>
+            </CreateForm>
+          </section>
+
+          {items.length === 0 ? (
+            <EmptyState title="Aucun article pour cet établissement" description="Ajoutez vos matières premières : les cuisiniers pourront les compter depuis leur tablette." />
+          ) : (
+            CATEGORY_ORDER.map((category) => {
+              const group = items.filter((i) => i.category === category);
+              if (group.length === 0) return null;
+              return (
+                <section key={category} className="mb-6">
+                  <h2 className="mb-2 text-base font-bold text-muted-foreground">
+                    {CATEGORY_LABELS[category]} · {formatMoney(value(group), tenant.currency)}
+                  </h2>
+                  <ul className="space-y-2">
+                    {group.map((item) => (
+                      <li key={item.id} className="rounded-card bg-card p-3 shadow-sm">
+                        <AutoSaveForm action={updateInventoryItemAction} className="grid grid-cols-2 items-end gap-2 sm:grid-cols-3 lg:grid-cols-[1fr_6rem_7rem_7rem_10rem_8rem_auto]">
+                          <input type="hidden" name="id" value={item.id} />
+                          <label className="col-span-2 block text-xs text-muted-foreground sm:col-span-3 lg:col-span-1">
+                            <span className="flex items-center gap-1">
+                              Article {isLowStock(item) && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
+                            </span>
+                            <Input name="name" defaultValue={item.name} className="mt-0.5 min-h-11" />
+                          </label>
+                          <label className="block text-xs text-muted-foreground">
+                            Qté ({item.unit})
+                            <Input name="quantity" type="number" step="0.1" min="0" defaultValue={item.quantity} className="mt-0.5 min-h-11 tabular-nums" />
+                          </label>
+                          <label className="block text-xs text-muted-foreground">
+                            Prix d’achat
+                            <Input name="unitPrice" type="number" step="0.01" min="0" defaultValue={item.unitPrice.toFixed(2)} className="mt-0.5 min-h-11 tabular-nums" />
+                          </label>
+                          <label className="block text-xs text-muted-foreground">
+                            Seuil d’alerte
+                            <Input name="lowStockThreshold" type="number" step="0.1" min="0" defaultValue={item.lowStockThreshold ?? ""} placeholder="—" className="mt-0.5 min-h-11 tabular-nums" />
+                          </label>
+                          <label className="block text-xs text-muted-foreground">
+                            Fournisseur
+                            <Select name="supplierId" defaultValue={item.supplierId ?? ""} className="mt-0.5 min-h-11 w-full">
+                              <option value="">—</option>
+                              {suppliers.map((s) => (
+                                <option key={s.id} value={s.id}>
+                                  {s.name}
+                                </option>
+                              ))}
+                            </Select>
+                          </label>
+                          <label className="flex min-h-11 items-center gap-2 text-xs text-muted-foreground">
+                            <input type="hidden" name="visibleToServerField" value="1" />
+                            <input
+                              type="checkbox"
+                              name="visibleToServer"
+                              value="true"
+                              defaultChecked={item.visibleToServer}
+                              className="h-5 w-5 accent-[var(--accent)]"
+                            />
+                            Visible salle
+                          </label>
+                          <div className="flex items-center justify-end gap-2">
+                            <span className="text-sm font-semibold tabular-nums text-foreground">{formatMoney(item.quantity * item.unitPrice, tenant.currency)}</span>
+                            <DeleteButton action={deleteInventoryItemAction} fields={{ id: item.id }} message={`${item.name} supprimé`} variant="ghost" size="icon" aria-label="Supprimer" confirmLabel="Supprimer ?">
+                              <Trash2 className="h-5 w-5 text-destructive" />
+                            </DeleteButton>
+                          </div>
+                        </AutoSaveForm>
+                        {item.supplierId && <p className="mt-1 text-xs text-muted-foreground">Fournisseur : {supplierName.get(item.supplierId)}</p>}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              );
+            })
+          )}
+        </>
+      )}
+    </>
+  );
+}

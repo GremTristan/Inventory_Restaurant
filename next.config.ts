@@ -5,29 +5,25 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(__dirname),
   },
+  // Logo uploads for white-labelling are the only large payload (capped at
+  // 2 MB app-side); everything else is small JSON/form posts.
   experimental: {
     serverActions: {
-      // The avatar widget (components/avatar-widget.tsx) compresses photos
-      // client-side before upload (resized + re-encoded JPEG, typically
-      // well under 1MB), so this ceiling should rarely if ever be hit in
-      // normal use. It's set generously high as a fallback for the rare
-      // case that compression fails (e.g. an unsupported source format) and
-      // the original, uncompressed file goes through instead — a modern
-      // phone photo can be 15-25MB uncompressed. If this config-level
-      // ceiling is hit, Next rejects the request before our code ever runs,
-      // so the user sees Next's raw "Body exceeded Xmb limit" error instead
-      // of our friendly message — keep this comfortably above the 10MB
-      // app-level check in lib/ai-avatar-actions.ts for that reason.
-      bodySizeLimit: "50mb",
+      bodySizeLimit: "4mb",
     },
-    // Every request — including the avatar's photo upload — passes through
-    // proxy.ts before reaching the Server Action, and Next 16 imposes a
-    // SEPARATE default 10MB cap there (independent of
-    // serverActions.bodySizeLimit above). Without raising this too, a large
-    // fallback (uncompressed) photo gets silently truncated at the proxy
-    // layer, which then breaks multipart parsing downstream with an opaque
-    // "Unexpected end of form" error rather than a clean rejection.
-    proxyClientMaxBodySize: "50mb",
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+    ];
   },
 };
 

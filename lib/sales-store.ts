@@ -1,22 +1,23 @@
 import "server-only";
 
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { dailySalesEntries, inventoryAccessGrants, menuItems, reminderCompletions } from "@/lib/db/schema";
-import type { DailySalesEntry, MenuItem, ReminderKind, Role, SiteId } from "@/types";
-import { sites } from "@/data/sites";
+import { dailySalesEntries, reminderCompletions } from "@/lib/db/schema";
+import { monthPeriod, todayPeriod } from "@/lib/dates";
+import type { DailySalesEntry, ReminderKind, Role, SiteId } from "@/types";
 
-// Postgres-backed store for menu, daily sales and reminder completions —
-// migrated off data/sales-config.json (see scripts/migrate-json-to-postgres.ts).
+export { todayPeriod, monthPeriod };
 
 type DailySalesRow = typeof dailySalesEntries.$inferSelect;
 
 function toDailySalesEntry(row: DailySalesRow): DailySalesEntry {
   return {
     id: row.id,
+    tenantId: row.tenantId,
     siteId: row.siteId,
     date: row.date,
     cardRevenue: Number(row.cardRevenue),
+    twintRevenue: Number(row.twintRevenue),
     netRevenue: Number(row.netRevenue),
     quantities: row.quantities,
     recordedByUserId: row.recordedByUserId,
@@ -24,44 +25,30 @@ function toDailySalesEntry(row: DailySalesRow): DailySalesEntry {
   };
 }
 
-export function todayPeriod(): string {
-  return new Date().toISOString().slice(0, 10);
+// --- Daily closures ---
+
+export async function getDailySalesBySite(siteId: SiteId, limit = 90): Promise<DailySalesEntry[]> {
+  const rows = await db
+    .select()
+    .from(dailySalesEntries)
+    .where(eq(dailySalesEntries.siteId, siteId))
+    .orderBy(desc(dailySalesEntries.date))
+    .limit(limit);
+  return rows.map(toDailySalesEntry);
 }
 
-export function monthPeriod(): string {
-  return new Date().toISOString().slice(0, 7);
+export async function getDailySalesForTenant(tenantId: string, fromDay: string, toDay: string): Promise<DailySalesEntry[]> {
+  const rows = await db
+    .select()
+    .from(dailySalesEntries)
+    .where(
+      and(eq(dailySalesEntries.tenantId, tenantId), gte(dailySalesEntries.date, fromDay), lte(dailySalesEntries.date, toDay))
+    )
+    .orderBy(desc(dailySalesEntries.date));
+  return rows.map(toDailySalesEntry);
 }
 
-// --- Menu ---
-
-export async function getMenuItems(siteId: SiteId): Promise<MenuItem[]> {
-  return db.select().from(menuItems).where(eq(menuItems.siteId, siteId));
-}
-
-export async function addMenuItem(siteId: SiteId, name: string): Promise<MenuItem> {
-  const [item] = await db.insert(menuItems).values({ siteId, name }).returning();
-  return item;
-}
-
-export async function renameMenuItem(id: string, name: string): Promise<void> {
-  await db.update(menuItems).set({ name }).where(eq(menuItems.id, id));
-}
-
-export async function deleteMenuItem(id: string): Promise<void> {
-  await db.delete(menuItems).where(eq(menuItems.id, id));
-}
-
-// --- Daily sales ---
-
-export async function getDailySalesBySite(siteId: SiteId): Promise<DailySalesEntry[]> {
-  const rows = await db.select().from(dailySalesEntries).where(eq(dailySalesEntries.siteId, siteId));
-  return rows.map(toDailySalesEntry).sort((a, b) => b.date.localeCompare(a.date));
-}
-
-export async function getDailySalesEntry(
-  siteId: SiteId,
-  date: string
-): Promise<DailySalesEntry | undefined> {
+export async function getDailySalesEntry(siteId: SiteId, date: string): Promise<DailySalesEntry | undefined> {
   const [row] = await db
     .select()
     .from(dailySalesEntries)
@@ -70,54 +57,39 @@ export async function getDailySalesEntry(
 }
 
 export async function recordDailySales(input: {
+  tenantId: string;
   siteId: SiteId;
   date: string;
   cardRevenue: number;
+  twintRevenue?: number;
   netRevenue: number;
   quantities: Record<string, number>;
   recordedByUserId: string;
 }): Promise<DailySalesEntry> {
+  const values = {
+    cardRevenue: input.cardRevenue.toFixed(2),
+    twintRevenue: (input.twintRevenue ?? 0).toFixed(2),
+    netRevenue: input.netRevenue.toFixed(2),
+    quantities: input.quantities,
+    recordedByUserId: input.recordedByUserId,
+    recordedAt: new Date(),
+  };
   const [row] = await db
     .insert(dailySalesEntries)
-    .values({
-      siteId: input.siteId,
-      date: input.date,
-      cardRevenue: input.cardRevenue.toString(),
-      netRevenue: input.netRevenue.toString(),
-      quantities: input.quantities,
-      recordedByUserId: input.recordedByUserId,
-      recordedAt: new Date(),
-    })
-    .onConflictDoUpdate({
-      target: [dailySalesEntries.siteId, dailySalesEntries.date],
-      set: {
-        cardRevenue: input.cardRevenue.toString(),
-        netRevenue: input.netRevenue.toString(),
-        quantities: input.quantities,
-        recordedByUserId: input.recordedByUserId,
-        recordedAt: new Date(),
-      },
-    })
+    .values({ tenantId: input.tenantId, siteId: input.siteId, date: input.date, ...values })
+    .onConflictDoUpdate({ target: [dailySalesEntries.siteId, dailySalesEntries.date], set: values })
     .returning();
   return toDailySalesEntry(row);
 }
 
 // --- Reminders ---
 
-export async function isReminderComplete(
-  siteId: SiteId,
-  kind: ReminderKind,
-  period: string
-): Promise<boolean> {
+export async function isReminderComplete(siteId: SiteId, kind: ReminderKind, period: string): Promise<boolean> {
   const [row] = await db
-    .select()
+    .select({ id: reminderCompletions.id })
     .from(reminderCompletions)
     .where(
-      and(
-        eq(reminderCompletions.siteId, siteId),
-        eq(reminderCompletions.kind, kind),
-        eq(reminderCompletions.period, period)
-      )
+      and(eq(reminderCompletions.siteId, siteId), eq(reminderCompletions.kind, kind), eq(reminderCompletions.period, period))
     );
   return row !== undefined;
 }
@@ -142,37 +114,24 @@ export interface PendingReminder {
   period: string;
 }
 
-// Single source of truth for "what's pending" — both the nav badge and the
-// notifications banner call this, so they can never drift out of sync.
 export async function getPendingReminders(siteId: SiteId): Promise<PendingReminder[]> {
   const today = todayPeriod();
   const month = monthPeriod();
+  const rows = await db
+    .select({ kind: reminderCompletions.kind, period: reminderCompletions.period })
+    .from(reminderCompletions)
+    .where(and(eq(reminderCompletions.siteId, siteId), inArray(reminderCompletions.period, [today, month])));
+  const done = new Set(rows.map((r) => `${r.kind}:${r.period}`));
   const pending: PendingReminder[] = [];
-
-  const [dailyDone, monthlyDone] = await Promise.all([
-    isReminderComplete(siteId, "daily-sales", today),
-    isReminderComplete(siteId, "monthly-inventory", month),
-  ]);
-
-  if (!dailyDone) pending.push({ kind: "daily-sales", period: today });
-  if (!monthlyDone) pending.push({ kind: "monthly-inventory", period: month });
+  if (!done.has(`daily-sales:${today}`)) pending.push({ kind: "daily-sales", period: today });
+  if (!done.has(`monthly-inventory:${month}`)) pending.push({ kind: "monthly-inventory", period: month });
   return pending;
 }
 
-export async function getPendingReminderCounts(): Promise<Partial<Record<SiteId, number>>> {
-  const entries = await Promise.all(
-    sites.map(async (site) => [site.id, (await getPendingReminders(site.id)).length] as const)
-  );
-  return Object.fromEntries(entries);
-}
-
-// Which reminder kind each role is actually responsible for — a manager
-// (chef crêpier) doesn't own the till, a waiter doesn't own the monthly
-// stock count. Directors see everything (kept as-is for the group nav
-// badge). Used to scope the login-screen dot and the per-user pending check
-// to only the task that person would actually act on.
+// Which reminder each role owns: the waiter closes the till, the cook counts
+// the stock. Directors see everything.
 const REMINDER_KIND_BY_ROLE: Partial<Record<Role, ReminderKind>> = {
-  manager: "monthly-inventory",
+  cook: "monthly-inventory",
   waiter: "daily-sales",
 };
 
@@ -180,35 +139,4 @@ export async function getPendingRemindersForRole(siteId: SiteId, role: Role): Pr
   const kind = REMINDER_KIND_BY_ROLE[role];
   const pending = await getPendingReminders(siteId);
   return kind ? pending.filter((reminder) => reminder.kind === kind) : pending;
-}
-
-export async function hasPendingReminderForRole(siteId: SiteId, role: Role): Promise<boolean> {
-  return (await getPendingRemindersForRole(siteId, role)).length > 0;
-}
-
-// --- Manager inventory access ---
-
-export async function hasInventoryAccess(siteId: SiteId): Promise<boolean> {
-  const [row] = await db
-    .select()
-    .from(inventoryAccessGrants)
-    .where(eq(inventoryAccessGrants.siteId, siteId));
-  return row !== undefined;
-}
-
-export async function setInventoryAccess(siteId: SiteId, granted: boolean): Promise<void> {
-  if (granted) {
-    await db.insert(inventoryAccessGrants).values({ siteId }).onConflictDoNothing();
-  } else {
-    await db.delete(inventoryAccessGrants).where(eq(inventoryAccessGrants.siteId, siteId));
-  }
-}
-
-export async function getInventoryAccessBySite(): Promise<Record<SiteId, boolean>> {
-  const rows = await db.select().from(inventoryAccessGrants);
-  const granted = new Set(rows.map((r) => r.siteId));
-  return Object.fromEntries(sites.map((site) => [site.id, granted.has(site.id)])) as Record<
-    SiteId,
-    boolean
-  >;
 }

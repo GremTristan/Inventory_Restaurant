@@ -8,6 +8,13 @@
       "when": 1785425007238,
       "tag": "0000_ancient_lila_cheney",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788290711564,
+      "tag": "0001_saas_multitenant",
+      "breakpoints": true
     }
   ]
 }
