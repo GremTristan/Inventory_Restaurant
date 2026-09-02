@@ -36,6 +36,7 @@ export default async function VentesPage({ searchParams }: { searchParams: Promi
   const siteId = sites.some((s) => s.id === params.site) ? params.site! : null;
   const { from, to, label } = range(period);
   const exportsEnabled = canUse(tenant, "exports");
+  const compareEnabled = canUse(tenant, "compareSites");
 
   const report = await salesReport(tenant.id, siteId ? sites.filter((s) => s.id === siteId) : sites, from, to);
   const scoped = siteId
@@ -129,7 +130,7 @@ export default async function VentesPage({ searchParams }: { searchParams: Promi
           )}
 
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            {!siteId && sites.length > 1 && (
+            {!siteId && sites.length > 1 && compareEnabled && (
               <section className="rounded-card bg-card p-5 shadow-sm">
                 <h2 className="mb-3 text-base font-bold text-foreground">Comparaison des établissements</h2>
                 <ul className="space-y-3">

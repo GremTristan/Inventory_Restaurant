@@ -6,6 +6,7 @@ import { EmptyState, PageHeader, SiteTabs } from "@/components/direction/ui";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { addMenuItemAction, deleteMenuItemAction, propagateMenuAction, updateMenuItemAction } from "@/lib/direction-actions";
+import { canUse } from "@/lib/billing/plans";
 import { getInventoryBySite } from "@/lib/inventory-store";
 import { getIngredientsForMenuItems, getMenuItems } from "@/lib/menu-store";
 import { pageDirector } from "@/lib/page-guards";
@@ -23,6 +24,7 @@ export default async function MenuPage({ searchParams }: { searchParams: Promise
 
   const [menu, inventory] = await Promise.all([getMenuItems(site.id), getInventoryBySite(site.id)]);
   const ingredients = await getIngredientsForMenuItems(menu.map((m) => m.id));
+  const recipesEnabled = canUse(tenant, "recipes");
 
   return (
     <>
@@ -120,6 +122,7 @@ export default async function MenuPage({ searchParams }: { searchParams: Promise
                       menuItem={item}
                       inventory={inventory}
                       lines={ingredients.filter((i) => i.menuItemId === item.id)}
+                      enabled={recipesEnabled}
                     />
                   </li>
                 ))}

@@ -1,9 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { InputHTMLAttributes, Ref } from "react";
 
-// `ref` accepted as a plain prop (React 19 no longer requires forwardRef) —
-// needed by components/avatar-widget.tsx, which imperatively writes a
-// speech-to-text transcript into this input via a ref.
+// `ref` accepted as a plain prop (React 19 no longer requires forwardRef).
 export function Input({
   className,
   ref,

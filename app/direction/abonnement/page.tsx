@@ -94,9 +94,13 @@ export default async function AbonnementPage({ searchParams }: { searchParams: P
                 {/* Plan changes on a live subscription go through the Stripe
                     portal (prorated) rather than a second checkout. */}
                 <form action={subscribed ? openPortalAction : startCheckoutAction} className="mt-6">
-                  <input type="hidden" name="plan" value={plan.id} />
+                  {!subscribed && <input type="hidden" name="plan" value={plan.id} />}
                   <Button type="submit" size="lg" variant={plan.id === "pro" ? "primary" : "secondary"} className="w-full" disabled={!configured}>
-                    {isCurrent ? "Formule actuelle — gérer" : subscribed ? `Passer à ${plan.name}` : `Souscrire à ${plan.name}`}
+                    {isCurrent
+                      ? "Formule actuelle — gérer"
+                      : subscribed
+                        ? "Changer dans l’espace de facturation"
+                        : `Souscrire à ${plan.name}`}
                   </Button>
                 </form>
               </article>
@@ -105,6 +109,7 @@ export default async function AbonnementPage({ searchParams }: { searchParams: P
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
           Prix hors taxes. Paiement sécurisé par Stripe ; nous ne stockons aucune donnée bancaire. Facture disponible chaque mois dans l’espace de facturation.
+          {subscribed && " Pour changer de formule sur un abonnement en cours, utilisez l’espace de facturation (prorata automatique)."}
         </p>
       </section>
     </>

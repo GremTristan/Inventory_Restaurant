@@ -17,12 +17,6 @@ import {
 export const roleEnum = pgEnum("role", ["cook", "director", "waiter", "superadmin"]);
 export const categoryEnum = pgEnum("category", ["frais", "sec", "sucre", "viande", "boissons"]);
 export const zoneEnum = pgEnum("zone", ["cuisine", "salle"]);
-export const imageMediaTypeEnum = pgEnum("image_media_type", [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-]);
 export const reminderKindEnum = pgEnum("reminder_kind", ["daily-sales", "monthly-inventory"]);
 export const tenantStatusEnum = pgEnum("tenant_status", ["trial", "active", "past_due", "canceled", "suspended"]);
 export const planEnum = pgEnum("plan", ["essentiel", "pro"]);
@@ -296,25 +290,6 @@ export const users = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("users_site_id_idx").on(table.siteId), index("users_tenant_id_idx").on(table.tenantId)]
-);
-
-export const receipts = pgTable(
-  "receipts",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    tenantId: uuid("tenant_id")
-      .notNull()
-      .references(() => tenants.id, { onDelete: "cascade" }),
-    siteId: uuid("site_id")
-      .notNull()
-      .references(() => sites.id, { onDelete: "cascade" }),
-    submittedByUserId: uuid("submitted_by_user_id").notNull(),
-    submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
-    imageUrl: text("image_url").notNull(),
-    imageMediaType: imageMediaTypeEnum("image_media_type").notNull(),
-    aiSummary: text("ai_summary").notNull(),
-  },
-  (table) => [index("receipts_site_id_idx").on(table.siteId)]
 );
 
 // Append-only trail of security-relevant actions (account changes, price
