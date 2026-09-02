@@ -37,13 +37,20 @@ async function outcomeOf(path: string, cookie?: string): Promise<{ outcome: Outc
 async function main() {
   const allUsers = await db.select().from(users).where(eq(users.active, true));
   const allSites = await db.select().from(sites);
-  const pick = (role: string) => allUsers.find((u) => u.role === role && (role === "superadmin" || u.tenantId));
-  const waiter = pick("waiter");
-  const cook = pick("cook");
-  const director = pick("director");
-  const admin = pick("superadmin");
+  // Same tenant + same site for waiter/cook, otherwise mixed-tenant picks
+  // look like permission bugs.
+  const director =
+    allUsers.find((u) => u.role === "director" && u.email?.endsWith("@creperies-group.ch")) ??
+    allUsers.find((u) => u.role === "director" && u.tenantId);
+  const waiter = director
+    ? allUsers.find((u) => u.role === "waiter" && u.tenantId === director.tenantId && u.siteId)
+    : undefined;
+  const cook = waiter
+    ? allUsers.find((u) => u.role === "cook" && u.tenantId === waiter.tenantId && u.siteId === waiter.siteId)
+    : undefined;
+  const admin = allUsers.find((u) => u.role === "superadmin");
   if (!waiter || !cook || !director) {
-    throw new Error("Need at least one active waiter, cook and director in the database (create a test tenant first).");
+    throw new Error("Need at least one active waiter, cook and director on the same tenant/site.");
   }
   const ownSite = allSites.find((s) => s.id === waiter.siteId)!;
   const foreignSite = allSites.find((s) => s.tenantId !== director.tenantId);

@@ -1,14 +1,19 @@
-// Completes the migrated "Crêperies Group" chain so it is sellable:
-// prices + categories on the existing card, missing drinks/ingredients,
-// recipes (stock decrement), alerts, suppliers, and usable logins.
-// Idempotent. Usage: npm run seed:chain
+// Remplace la carte générique par les menus imprimés (BDF, Molard, Philosophes,
+// Vieux-Carouge) et l’inventaire Molard de janvier 2026. Vevey et Hoshy
+// n’ont pas de PDF : ils reprennent la carte BDF. Le stock chiffré n’est
+// posé qu’à Molard ; les autres établissements reçoivent le même catalogue
+// à quantité 0 (à compter sur place). Idempotent. Usage : npm run seed:chain
 import { config } from "dotenv";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { and, eq, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { inventoryItems, menuItemIngredients, menuItems, sites, suppliers, tenants, users } from "../lib/db/schema";
 import type { Category, MenuCategory, Zone } from "../types";
+import { menus, type MenuItemKind, type SourceMenuItem } from "./data/menus";
 
 config({ path: ".env.local", quiet: true });
 config({ quiet: true });
@@ -17,58 +22,13 @@ const TENANT_SLUG = "creperies-group";
 const DIRECTOR_EMAIL = "julien.perret@creperies-group.ch";
 const DIRECTOR_PASSWORD = "Creperie2026!";
 
-const CARD: { name: string; price: number; category: MenuCategory }[] = [
-  { name: "Galette complète", price: 14.5, category: "salee" },
-  { name: "Crêpe jambon-fromage", price: 12, category: "salee" },
-  { name: "Crêpe Nutella", price: 7.5, category: "sucree" },
-  { name: "Crêpe sucre-citron", price: 6.5, category: "sucree" },
-  { name: "Crêpe beurre-sucre", price: 6, category: "sucree" },
-  { name: "Coca-Cola", price: 4, category: "boisson" },
-  { name: "Cidre brut", price: 6.5, category: "boisson" },
-  { name: "Café", price: 3.5, category: "boisson" },
-  { name: "Thé", price: 3.5, category: "boisson" },
-  { name: "Eau minérale", price: 3.5, category: "boisson" },
-];
-
-const EXTRA_STOCK: {
-  name: string;
-  unit: string;
-  unitsPerPackage: number;
-  packageContentLabel?: string;
-  category: Category;
-  zone: Zone;
-  quantity: number;
-  unitPrice: number;
-  threshold: number;
-  visibleToServer?: boolean;
-}[] = [
-  { name: "Coca-Cola", unit: "bouteille", unitsPerPackage: 1, category: "boissons", zone: "salle", quantity: 24, unitPrice: 1.15, threshold: 8, visibleToServer: true },
-  { name: "Café", unit: "kg", unitsPerPackage: 1, category: "sec", zone: "salle", quantity: 2, unitPrice: 18.5, threshold: 0.4 },
-  { name: "Thé", unit: "sachet", unitsPerPackage: 1, category: "sec", zone: "salle", quantity: 80, unitPrice: 0.18, threshold: 20 },
-  { name: "Eau minérale", unit: "bouteille", unitsPerPackage: 1, category: "boissons", zone: "salle", quantity: 24, unitPrice: 0.55, threshold: 8, visibleToServer: true },
-  { name: "Citrons", unit: "pièce", unitsPerPackage: 1, category: "frais", zone: "cuisine", quantity: 30, unitPrice: 0.45, threshold: 10 },
-];
-
-const THRESHOLDS: Record<string, number> = {
-  "Farine de froment": 10,
-  "Farine de sarrasin": 8,
-  Œufs: 6,
-  "Lait entier": 2,
-  Beurre: 4,
-  Sucre: 8,
-  Jambon: 3,
-  "Fromage râpé": 3,
-  Nutella: 2,
-  "Cidre brut": 8,
-};
-
-const SITE_SCALE: Record<string, number> = {
-  bdf: 1,
-  carouge: 1.1,
-  molard: 1.5,
-  vevey: 0.85,
-  philosophe: 0.75,
-  hoshy: 1.3,
+const SITE_NAMES: Record<string, string> = {
+  bdf: "Crêperie du Bourg-de-Four",
+  carouge: "Crêperie du Vieux-Carouge",
+  molard: "Crêperie du Molard",
+  vevey: "Crêperie de Vevey",
+  philosophe: "Crêperie des Philosophes",
+  hoshy: "Hoshy",
 };
 
 const STAFF_PINS: Record<string, string> = {
@@ -86,55 +46,274 @@ const STAFF_PINS: Record<string, string> = {
   "Maxime Ducret": "1748",
 };
 
-const RECIPES: Record<string, { ingredient: string; quantity: number }[]> = {
-  "Galette complète": [
-    { ingredient: "Farine de sarrasin", quantity: 0.08 },
-    { ingredient: "Œufs", quantity: 0.083 },
-    { ingredient: "Jambon", quantity: 0.06 },
-    { ingredient: "Fromage râpé", quantity: 0.05 },
-    { ingredient: "Beurre", quantity: 0.02 },
-  ],
-  "Crêpe jambon-fromage": [
-    { ingredient: "Farine de froment", quantity: 0.07 },
-    { ingredient: "Lait entier", quantity: 0.012 },
-    { ingredient: "Jambon", quantity: 0.05 },
-    { ingredient: "Fromage râpé", quantity: 0.04 },
-    { ingredient: "Beurre", quantity: 0.015 },
-  ],
-  "Crêpe Nutella": [
-    { ingredient: "Farine de froment", quantity: 0.07 },
-    { ingredient: "Nutella", quantity: 0.035 },
-    { ingredient: "Beurre", quantity: 0.01 },
-  ],
-  "Crêpe sucre-citron": [
-    { ingredient: "Farine de froment", quantity: 0.07 },
-    { ingredient: "Sucre", quantity: 0.02 },
-    { ingredient: "Citrons", quantity: 0.5 },
-    { ingredient: "Beurre", quantity: 0.01 },
-  ],
-  "Crêpe beurre-sucre": [
-    { ingredient: "Farine de froment", quantity: 0.07 },
-    { ingredient: "Beurre", quantity: 0.02 },
-    { ingredient: "Sucre", quantity: 0.02 },
-  ],
-  "Coca-Cola": [{ ingredient: "Coca-Cola", quantity: 1 }],
-  "Cidre brut": [{ ingredient: "Cidre brut", quantity: 1 }],
-  Café: [{ ingredient: "Café", quantity: 0.018 }],
-  Thé: [{ ingredient: "Thé", quantity: 1 }],
-  "Eau minérale": [{ ingredient: "Eau minérale", quantity: 1 }],
+const NO_AUTO_INGREDIENT = new Set([
+  "1 boule",
+  "2 boules",
+  "3 boules",
+  "Coupe Smiley",
+  "Fanta ou Sprite",
+  "Rivella rouge ou bleu",
+  "Thé froid pêche ou citron",
+  "Nectars ananas ou abricot",
+]);
+
+// Printed-menu wording → names as they appear on the Molard supplier sheet.
+const ALIASES: Record<string, string[]> = {
+  "Gruyère AOP": ["Gruyère AOP râpé"],
+  Jambon: ["Jambon Prestige", "Jambon cuit Puccini"],
+  "Jambon genevois": ["Jambon Prestige", "Jambon Cru du Château"],
+  Œuf: ["Œufs 63/73 import plein air", "Œufs 63/73 import"],
+  Chorizo: ["Chorizo entier", "Chorizo piquant"],
+  Champignons: ["Champignons de paris brun"],
+  Épinards: ["Épinard en branches", "Epinard en branche (surgelé)"],
+  "Épinards nature": ["Épinard en branches", "Epinard en branche (surgelé)"],
+  "Fromage de chèvre": ["Chèvre Bûche Saint Maure", "Bûchette Cendrée Coque lait"],
+  Mozzarella: ["Mozzarella Cossette 45%", "Mozzraella net rapé"],
+  "Mozzarella de bufflonne": ["Mozzarella Cossette 45%"],
+  Parmesan: ["Parmesan pointe AOP", "Pétale Parmiggiano Regg 500gr"],
+  "Saumon fumé": ["Saumon fumé (surgelé)", "Saumon fumé royal"],
+  Lardons: ["Lardons fumés cru"],
+  Câpres: ["Câpres capucines"],
+  "Crème acidulée": ["Crème acidulée 15%"],
+  Crème: ["LRG crème", "Crème (35%MG)"],
+  "Oignons crus": ["oignons demi emincés", "Oignons blancs", "Oignons rouges"],
+  "Oignons confits": ["Oignons Confit"],
+  "Confit d'oignons": ["Oignons Confit"],
+  Noix: ["Cerneaux de noix cassés"],
+  Miel: ["Miel de fleur"],
+  Nutella: ["Nutella pot de 750g"],
+  Beurre: ["Beurre Salé", "Beurre Motte", "Beurre Doux"],
+  Sucre: ["Sucre fin cristallisé", "Sucre sachet"],
+  Poire: ["Poire"],
+  "Pomme fruit": ["Pommes gala cube"],
+  "Pommes caramélisées": ["Pommes gala cube"],
+  "Compote de pommes": ["Pommes gala cube"],
+  "Amandes grillées": ["Amandes effilées"],
+  "Caramel au beurre salé": ["Caramel beurre salé"],
+  "Noix de coco râpée": ["Noix de coco râpée"],
+  "Chocolat artisanal": ["Chocolat"],
+  "Filet de poulet": ["Poulet Hallal", "Filet de Poulet Halal", "Filet de Poulet Français"],
+  "Émincé de poulet": ["Poulet Hallal"],
+  "Poulet mariné": ["Poulet Hallal"],
+  "Tomates cerise confites": ["Tomates cerises cherry"],
+  "Tomates cerises confites": ["Tomates cerises cherry"],
+  Tomates: ["Tomates Samsmazano", "Tomates cerises cherry"],
+  Concombre: ["Concombres"],
+  "Sauce tomate au basilic": ["Sauce Tomate", "Pesto"],
+  "Fromage à raclette": ["Raclette le corboîer carré"],
+  "Tomme genevoise": ["Tomme GRTA 100gr"],
+  "Tomme vaudoise": ["Tomme Vaudoise", "Tomme GRTA 100gr"],
+  Saucisse: ["Saucisson de Jussy IGP kg", "Saucisse à rôtir fermier Vaudois"],
+  "Saucisson vaudois": ["Saucisson Vaudois IGP kg", "Saucisson de Jussy IGP kg"],
+  "Jambon de Parme": ["Jambon de Parme"],
+  "Jambon cru": ["Jambon Cru du Château", "Jambon de Parme"],
+  Bresaola: ["Bresaola"],
+  "Magret de canard": ["Magret de canard fumé"],
+  "Magret de canard fumé": ["Magret de canard fumé"],
+  "Bœuf haché": ["Viande Hachée", "Viande de bœuf haché (surgelé)"],
+  Salade: ["Salade feuilles de chènes", "Roquette"],
+  Roquette: ["Roquette"],
+  Olives: ["Olives Noires dénoyautées"],
+  "Glace Chocolat": ["IMP Glace Chocolat"],
+  "Glace Vanille": ["IMP Glace Vanille"],
+  "Glace Mocca": ["IMP Glace Mocca"],
+  "Glace Stracciatella": ["IMP Glace Stacciatella"],
+  "Cidre Sorre Brut": ["Cidre Sorre Brut"],
+  "Cidre Sorre Doux": ["Cidre Sorre Doux"],
+  "Cidre Rhuys": ["Cidre Rhuys"],
+  "Vin blanc Chasselas": ["Vin blanc Chasselas", "Château du Crêt (Chasselas)"],
+  Café: ["Grain Napolitano", "Grain Top Arabica"],
+  "Double espresso": ["Grain Napolitano"],
+  Cappuccino: ["Grain Napolitano"],
+  "Café Viennois": ["Grain Napolitano"],
+  "Café viennois": ["Grain Napolitano"],
+  Renversé: ["Grain Napolitano", "Lait entier"],
+  "Lait chaud ou froid": ["Lait entier"],
+  "Petite salade verte": ["Salade feuilles de chènes"],
+  "Petite salade mixte": ["Salade feuilles de chènes"],
+  "Compote de pommes maison et amandes": ["Pommes gala cube", "Amandes effilées"],
+  "Coca-Cola": ["Coca-cola caisse"],
+  "Valser 5dl": ["Valser Still Naturelle 50", "Valser Gazeuse 50", "Valser plate"],
+  Valser: ["Valser Still Naturelle 50", "Valser plate"],
+  Prosecco: ["Proseco"],
+  "Prosecco flûte": ["Proseco"],
+  "Flûte de Prosecco": ["Proseco"],
+  "Aperol Spritz": ["Aperol", "Apérol apéritif 11 %"],
+  "Bière pression blonde 3dl": ["Bière blonde Feld"],
+  "Duchesse Anne": ["Duchesse Anne"],
+  "Jus de pommes artisanal médaillé": ["Jus de pomme"],
+  "Jus de pomme artisanal médaillé": ["Jus de pomme"],
+  "Jus d'oranges": ["Granini Orange", "Oranges a jus"],
+  "Jus d'oranges fraîchement pressées": ["Oranges a jus", "Granini Orange"],
+  "Pirulo tropical": ["Pirulo Tropical"],
+  "Sirop d'érable": ["Sirop d’Erable"],
+  "Crème de marrons": ["Crème de marron"],
+  "Kinder Surprise": ["Kinder surprise"],
+  "Thés Eilles": ["Earl grey", "Ceylan"],
 };
 
-const SUPPLIER_FOR: Record<string, string> = {
-  frais: "Prodega",
-  sec: "Prodega",
-  viande: "Prodega",
-  sucre: "Ferrero Foodservice",
-  boissons: "Boissons du Léman",
-};
+interface MolardRow {
+  supplier: string;
+  name: string;
+  unit: string;
+  quantity: number;
+  unitPrice: number;
+}
 
-function round(n: number, digits = 3) {
+function round(n: number, digits = 4) {
   const f = 10 ** digits;
   return Math.round(n * f) / f;
+}
+
+function kindToCategory(kind: MenuItemKind): MenuCategory {
+  if (kind === "boisson") return "boisson";
+  if (kind === "crepe_sucree" || kind === "glace") return "sucree";
+  return "salee";
+}
+
+function guessCategory(name: string): Category {
+  const lower = name.toLowerCase();
+  const rules: [Category, string[]][] = [
+    [
+      "boissons",
+      [
+        "cidre",
+        "vin ",
+        "bière",
+        "biere",
+        "jus ",
+        "café",
+        "cafe",
+        "cappuccino",
+        "espresso",
+        "renversé",
+        "renverse",
+        "thé",
+        "soda",
+        "sirop",
+        "valser",
+        "coca",
+        "fanta",
+        "sprite",
+        "rivella",
+        "prosecco",
+        "proseco",
+        "aperol",
+        "apérol",
+        "whisky",
+        "rhum",
+        "vodka",
+        "gin",
+        "pastis",
+        "campari",
+        "martini",
+        "matini",
+        "grand marnier",
+        "calvados",
+        "poirée",
+        "fuse tea",
+        "granini",
+        "kinley",
+        "romanette",
+        "cristallo",
+        "feld",
+        "lambig",
+      ],
+    ],
+    [
+      "viande",
+      ["jambon", "saumon", "thon", "viande", "poulet", "bœuf", "boeuf", "porc", "bresaola", "saucisse", "saucisson", "chorizo", "lardons", "magret", "cerf"],
+    ],
+    [
+      "frais",
+      [
+        "lait",
+        "crème",
+        "creme",
+        "œuf",
+        "oeuf",
+        "fromage",
+        "beurre",
+        "mozzarella",
+        "mozzraella",
+        "chèvre",
+        "chevre",
+        "tomme",
+        "yaourt",
+        "gruyère",
+        "parmesan",
+        "parmiggiano",
+        "raclette",
+        "reblochon",
+        "cheddar",
+        "bûchette",
+      ],
+    ],
+    ["sucre", ["confiture", "nutella", "chocolat", "sucre", "miel", "caramel", "glace", "sorbet", "compote", "kinder", "smarties", "caotina", "pirulo"]],
+  ];
+  for (const [category, keywords] of rules) {
+    if (keywords.some((kw) => lower.includes(kw))) return category;
+  }
+  return "sec";
+}
+
+function zoneFor(category: Category, name: string): Zone {
+  if (category === "boissons") return "salle";
+  if (/glace|sorbet|pirulo/i.test(name)) return "cuisine";
+  return "cuisine";
+}
+
+function packagesFromUnit(unit: string): { unitsPerPackage: number; packageContentLabel: string | null } {
+  const caisse = unit.match(/(\d+)\s*[x×*]/i);
+  if (caisse) return { unitsPerPackage: Number(caisse[1]), packageContentLabel: unit };
+  const pack = unit.match(/pack de (\d+)/i);
+  if (pack) return { unitsPerPackage: Number(pack[1]), packageContentLabel: unit };
+  const carton = unit.match(/carton de (\d+)/i);
+  if (carton) return { unitsPerPackage: Number(carton[1]), packageContentLabel: unit };
+  return { unitsPerPackage: 1, packageContentLabel: null };
+}
+
+function findInventoryMatch(target: string, candidates: { id: string; name: string }[]): string | null {
+  const wanted = target.toLowerCase().trim();
+  const exact = candidates.find((c) => c.name.toLowerCase().trim() === wanted);
+  if (exact) return exact.id;
+  for (const alias of ALIASES[target] ?? []) {
+    const hit = candidates.find((c) => c.name.toLowerCase().trim() === alias.toLowerCase());
+    if (hit) return hit.id;
+  }
+  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const substring = candidates.find((c) => {
+    const name = c.name.toLowerCase().trim();
+    const [shorter, longer] = name.length <= wanted.length ? [name, wanted] : [wanted, name];
+    if (shorter.length < 5) return false;
+    return new RegExp(`\\b${escape(shorter)}\\b`, "i").test(longer);
+  });
+  return substring?.id ?? null;
+}
+
+function recipeQuantity(ingredientName: string, unit: string, kind: MenuItemKind): number {
+  const n = ingredientName.toLowerCase();
+  const u = unit.toLowerCase();
+  if (kind === "boisson" || /cidre|coca|valser|bière|prosecco|proseco|jus |thé|café|aperol|hugo|rivella|fanta|sprite/.test(n)) {
+    return 1;
+  }
+  if (/œuf|oeuf/.test(n)) return 1;
+  if (/farine/.test(n)) return 0.004;
+  if (/glace|sorbet/.test(n)) return 0.08;
+  if (/\bkg\b|kilo/.test(u)) return 0.04;
+  return 0.05;
+}
+
+function menuForSlug(slug: string): SourceMenuItem[] {
+  const found = menus.find((m) => m.siteSlug === slug);
+  if (found) return found.items;
+  return menus.find((m) => m.siteSlug === "bdf")?.items ?? [];
+}
+
+function loadMolardInventory(): MolardRow[] {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const raw = readFileSync(join(here, "data/molard-inventory.json"), "utf8");
+  return JSON.parse(raw) as MolardRow[];
 }
 
 async function main() {
@@ -159,10 +338,22 @@ async function main() {
     })
     .where(eq(tenants.id, tenant.id));
 
+  const catalog = loadMolardInventory();
   const chainSites = await db.select().from(sites).where(eq(sites.tenantId, tenant.id));
+  const siteIds = chainSites.map((s) => s.id);
+  if (siteIds.length === 0) throw new Error("Aucun établissement sur Crêperies Group.");
 
+  for (const site of chainSites) {
+    const name = SITE_NAMES[site.slug];
+    if (name && name !== site.name) {
+      await db.update(sites).set({ name }).where(eq(sites.id, site.id));
+      site.name = name;
+    }
+  }
+
+  const supplierNames = [...new Set(catalog.map((row) => row.supplier))];
   const supplierIds = new Map<string, string>();
-  for (const name of ["Prodega", "Ferrero Foodservice", "Boissons du Léman"]) {
+  for (const name of supplierNames) {
     const [existing] = await db
       .select()
       .from(suppliers)
@@ -175,105 +366,107 @@ async function main() {
     }
   }
 
-  const catalogNames = CARD.map((c) => c.name);
+  if (siteIds.length > 0) {
+    await db.delete(menuItems).where(inArray(menuItems.siteId, siteIds));
+    await db.delete(inventoryItems).where(inArray(inventoryItems.siteId, siteIds));
+  }
+
+  let recipeLinks = 0;
+  let createdExtras = 0;
 
   for (const site of chainSites) {
-    const scale = SITE_SCALE[site.slug] ?? 1;
-    const stock = await db.select().from(inventoryItems).where(eq(inventoryItems.siteId, site.id));
-    const byName = new Map(stock.map((row) => [row.name, row]));
+    const isMolard = site.slug === "molard";
+    const stockRows = catalog.map((row) => {
+      const category = guessCategory(row.name);
+      const zone = zoneFor(category, row.name);
+      const pack = packagesFromUnit(row.unit);
+      const quantity = isMolard ? row.quantity : 0;
+      const threshold = isMolard && quantity > 0 ? round(Math.max(quantity * 0.2, quantity >= 10 ? 2 : 0.2), 3) : null;
+      return {
+        tenantId: tenant.id,
+        siteId: site.id,
+        name: row.name,
+        unit: row.unit,
+        unitsPerPackage: pack.unitsPerPackage,
+        packageContentLabel: pack.packageContentLabel,
+        quantity: quantity.toString(),
+        unitPrice: row.unitPrice.toFixed(2),
+        lowStockThreshold: threshold === null ? null : threshold.toString(),
+        category,
+        zone,
+        visibleToManager: true,
+        visibleToServer: zone === "salle",
+        supplierId: supplierIds.get(row.supplier) ?? null,
+      };
+    });
 
-    for (const extra of EXTRA_STOCK) {
-      if (byName.has(extra.name)) continue;
-      const [row] = await db
-        .insert(inventoryItems)
-        .values({
-          tenantId: tenant.id,
-          siteId: site.id,
-          name: extra.name,
-          unit: extra.unit,
-          unitsPerPackage: extra.unitsPerPackage,
-          packageContentLabel: extra.packageContentLabel ?? null,
-          quantity: round(extra.quantity * scale).toString(),
-          unitPrice: extra.unitPrice.toFixed(2),
-          lowStockThreshold: extra.threshold.toString(),
-          category: extra.category,
-          zone: extra.zone,
-          visibleToManager: true,
-          visibleToServer: extra.visibleToServer ?? extra.category === "boissons",
-          supplierId: supplierIds.get(SUPPLIER_FOR[extra.category]) ?? null,
-        })
-        .returning();
-      byName.set(row.name, row);
-    }
+    const insertedStock = await db.insert(inventoryItems).values(stockRows).returning({ id: inventoryItems.id, name: inventoryItems.name, unit: inventoryItems.unit });
+    const stockByName = insertedStock.map((row) => ({ id: row.id, name: row.name, unit: row.unit }));
 
-    for (const item of byName.values()) {
-      const threshold = THRESHOLDS[item.name] ?? (item.lowStockThreshold ? Number(item.lowStockThreshold) : null);
-      const supplierName = SUPPLIER_FOR[item.category];
-      await db
-        .update(inventoryItems)
-        .set({
-          lowStockThreshold: threshold === null ? item.lowStockThreshold : threshold.toString(),
-          supplierId: supplierName ? (supplierIds.get(supplierName) ?? item.supplierId) : item.supplierId,
-        })
-        .where(eq(inventoryItems.id, item.id));
-    }
+    const card = menuForSlug(site.slug);
+    const menuRows = card.map((item, index) => ({
+      tenantId: tenant.id,
+      siteId: site.id,
+      name: item.name,
+      price: item.price.toFixed(2),
+      category: kindToCategory(item.kind),
+      available: true,
+      sortOrder: index,
+    }));
+    const insertedMenu = await db.insert(menuItems).values(menuRows).returning();
 
-    const menu = await db.select().from(menuItems).where(eq(menuItems.siteId, site.id));
-    const menuByName = new Map(menu.map((row) => [row.name, row]));
-    const keepIds: string[] = [];
+    const recipeValues: { menuItemId: string; inventoryItemId: string; quantity: string }[] = [];
 
-    for (const [index, product] of CARD.entries()) {
-      const existing = menuByName.get(product.name);
-      if (existing) {
-        await db
-          .update(menuItems)
-          .set({
-            price: product.price.toFixed(2),
-            category: product.category,
-            available: true,
-            sortOrder: index,
-          })
-          .where(eq(menuItems.id, existing.id));
-        keepIds.push(existing.id);
-      } else {
-        const [row] = await db
-          .insert(menuItems)
-          .values({
-            tenantId: tenant.id,
-            siteId: site.id,
-            name: product.name,
-            price: product.price.toFixed(2),
-            category: product.category,
-            available: true,
-            sortOrder: index,
-          })
-          .returning();
-        keepIds.push(row.id);
-        menuByName.set(row.name, row);
-      }
-    }
+    for (let i = 0; i < card.length; i++) {
+      const source = card[i];
+      const menuRow = insertedMenu[i];
+      const names = source.ingredients ?? (NO_AUTO_INGREDIENT.has(source.name) ? [] : [source.name]);
+      const seen = new Set<string>();
 
-    const stale = menu.filter((row) => !catalogNames.includes(row.name)).map((row) => row.id);
-    if (stale.length > 0) {
-      await db.delete(menuItems).where(inArray(menuItems.id, stale));
-    }
-
-    const freshStock = await db.select().from(inventoryItems).where(eq(inventoryItems.siteId, site.id));
-    const stockId = new Map(freshStock.map((row) => [row.name, row.id]));
-    const freshMenu = await db.select().from(menuItems).where(eq(menuItems.siteId, site.id));
-
-    for (const product of freshMenu) {
-      const recipe = RECIPES[product.name] ?? [];
-      await db.delete(menuItemIngredients).where(eq(menuItemIngredients.menuItemId, product.id));
-      for (const line of recipe) {
-        const inventoryItemId = stockId.get(line.ingredient);
-        if (!inventoryItemId) continue;
-        await db.insert(menuItemIngredients).values({
-          menuItemId: product.id,
+      for (const ingredientName of names) {
+        let inventoryItemId = findInventoryMatch(ingredientName, stockByName);
+        let unit = "unité";
+        if (!inventoryItemId) {
+          const category = guessCategory(ingredientName);
+          const zone = source.kind === "boisson" ? "salle" : zoneFor(category, ingredientName);
+          const [created] = await db
+            .insert(inventoryItems)
+            .values({
+              tenantId: tenant.id,
+              siteId: site.id,
+              name: ingredientName,
+              unit: source.kind === "boisson" ? "unité" : "portion",
+              unitsPerPackage: 1,
+              quantity: "0",
+              unitPrice: "0.00",
+              lowStockThreshold: null,
+              category,
+              zone,
+              visibleToManager: true,
+              visibleToServer: zone === "salle",
+              supplierId: null,
+            })
+            .returning({ id: inventoryItems.id, name: inventoryItems.name, unit: inventoryItems.unit });
+          inventoryItemId = created.id;
+          unit = created.unit;
+          stockByName.push({ id: created.id, name: created.name, unit: created.unit });
+          createdExtras++;
+        } else {
+          unit = stockByName.find((s) => s.id === inventoryItemId)?.unit ?? "unité";
+        }
+        if (seen.has(inventoryItemId)) continue;
+        seen.add(inventoryItemId);
+        recipeValues.push({
+          menuItemId: menuRow.id,
           inventoryItemId,
-          quantity: line.quantity.toString(),
+          quantity: recipeQuantity(ingredientName, unit, source.kind).toString(),
         });
       }
+    }
+
+    if (recipeValues.length > 0) {
+      await db.insert(menuItemIngredients).values(recipeValues);
+      recipeLinks += recipeValues.length;
     }
   }
 
@@ -306,15 +499,21 @@ async function main() {
       .where(eq(users.id, person.id));
   }
 
-  const recipes = await db.select({ id: menuItemIngredients.id }).from(menuItemIngredients);
-  console.log(`Chaîne ${tenant.name} prête.`);
-  console.log(`  ${chainSites.length} établissements · carte ${CARD.length} produits · ${recipes.length} lignes de recette`);
+  const refreshedSites = await db.select().from(sites).where(eq(sites.tenantId, tenant.id));
+  console.log(`Chaîne ${tenant.name} alignée sur les cartes imprimées + inventaire Molard janv. 2026.`);
+  console.log(`  ${catalog.length} articles de stock (quantités réelles à Molard seulement)`);
+  console.log(`  ${recipeLinks} liaisons recette · ${createdExtras} articles créés pour matcher la carte (qté 0)`);
   console.log(`  Direction : ${DIRECTOR_EMAIL}  /  ${DIRECTOR_PASSWORD}`);
   console.log("  Tablettes :");
-  for (const site of chainSites.sort((a, b) => a.name.localeCompare(b.name, "fr"))) {
+  for (const site of refreshedSites.sort((a, b) => a.name.localeCompare(b.name, "fr"))) {
     const people = staff.filter((u) => u.siteId === site.id);
-    const pins = people.map((u) => `${u.name} ${STAFF_PINS[u.name] ?? "—"} (${u.role === "cook" ? "cuisine" : "service"})`).join(" · ");
-    console.log(`    ${site.name.padEnd(12)} code tablette ${site.deviceCode}  —  ${pins}`);
+    const pins = people
+      .map((u) => `${u.name} ${STAFF_PINS[u.name] ?? "—"} (${u.role === "cook" ? "cuisine" : "service"})`)
+      .join(" · ");
+    const card = menuForSlug(site.slug);
+    const note = menus.some((m) => m.siteSlug === site.slug) ? `${card.length} produits` : `${card.length} produits (carte BDF, pas de PDF)`;
+    console.log(`    ${site.name.padEnd(32)} code ${site.deviceCode}  —  ${note}`);
+    if (pins) console.log(`      ${pins}`);
   }
 }
 
