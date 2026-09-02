@@ -51,7 +51,7 @@ export default async function DirectionHome({ searchParams }: { searchParams: Pr
       <PageHeader title={`Bonjour ${user.name.split(" ")[0]}`} description={`${tenant.name} · ${formatDayLabel(today)}`} />
 
       {showChecklist && (
-        <section className="mb-6 rounded-card border border-accent/30 bg-accent/5 p-5">
+        <section className="mb-8 rounded-card border border-accent/30 bg-accent/5 p-5">
           <h2 className="text-lg font-bold text-foreground">Mise en route</h2>
           <p className="text-sm text-muted-foreground">Cinq étapes, dix minutes, et votre équipe prend ses premières commandes.</p>
           <ul className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -102,13 +102,13 @@ export default async function DirectionHome({ searchParams }: { searchParams: Pr
                   <span className="rounded-pill bg-muted px-3 py-1 font-mono text-sm font-bold tracking-widest">{site.deviceCode}</span>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2 text-sm">
-                  <Link href={`/s/${site.id}/service`} className="min-h-10 inline-flex items-center rounded-pill bg-muted px-4 font-medium hover:bg-border/60">
+                  <Link href={`/s/${site.id}/service`} className="min-h-11 inline-flex items-center rounded-pill bg-muted px-4 font-medium hover:bg-border/60">
                     Écran service
                   </Link>
-                  <Link href={`/s/${site.id}/cuisine`} className="min-h-10 inline-flex items-center rounded-pill bg-muted px-4 font-medium hover:bg-border/60">
+                  <Link href={`/s/${site.id}/cuisine`} className="min-h-11 inline-flex items-center rounded-pill bg-muted px-4 font-medium hover:bg-border/60">
                     Écran cuisine
                   </Link>
-                  <Link href={`/direction/ventes?site=${site.id}`} className="min-h-10 inline-flex items-center rounded-pill px-4 font-medium text-accent hover:bg-accent/10">
+                  <Link href={`/direction/ventes?site=${site.id}`} className="min-h-11 inline-flex items-center rounded-pill px-4 font-medium text-accent hover:bg-accent/10">
                     Rapport détaillé →
                   </Link>
                 </div>

@@ -54,7 +54,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
               return (
                 <a key={s.id} href={`/direction/stock?site=${s.id}`} className="rounded-card bg-card p-5 shadow-sm hover:bg-muted/40">
                   <h3 className="text-lg font-bold text-foreground">{s.name}</h3>
-                  <p className="text-2xl font-bold tabular-nums">{formatMoney(value(own), tenant.currency)}</p>
+                  <p className="text-[20px] font-bold tracking-tight tabular-nums">{formatMoney(value(own), tenant.currency)}</p>
                   <p className="text-sm text-muted-foreground">
                     {own.length} article{own.length > 1 ? "s" : ""}
                     {low.length > 0 && <span className="ml-2 font-semibold text-destructive">· {low.length} à commander</span>}
@@ -95,21 +95,21 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
         </>
       ) : (
         <>
-          <section className="mb-6 rounded-card bg-card p-4 shadow-sm sm:p-5">
+          <section className="mb-8 rounded-card bg-card p-5 shadow-sm">
             <h2 className="mb-3 text-base font-bold text-foreground">Ajouter un article — {site.name}</h2>
             <CreateForm action={addInventoryItemAction} submitLabel="Ajouter" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_6rem_9rem_6rem_7rem_7rem_auto] lg:items-end">
               <input type="hidden" name="siteId" value={site.id} />
               <label className="block text-sm font-medium">
                 Nom
-                <Input name="name" required placeholder="Farine de sarrasin" className="mt-1 min-h-12" />
+                <Input name="name" required placeholder="Farine de sarrasin" className="mt-1 min-h-11" />
               </label>
               <label className="block text-sm font-medium">
                 Unité
-                <Input name="unit" placeholder="kg" defaultValue="pièce" className="mt-1 min-h-12" />
+                <Input name="unit" placeholder="kg" defaultValue="pièce" className="mt-1 min-h-11" />
               </label>
               <label className="block text-sm font-medium">
                 Catégorie
-                <Select name="category" defaultValue="sec" className="mt-1 min-h-12 w-full">
+                <Select name="category" defaultValue="sec" className="mt-1 min-h-11 w-full">
                   {CATEGORY_ORDER.map((c) => (
                     <option key={c} value={c}>
                       {CATEGORY_LABELS[c]}
@@ -119,15 +119,15 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
               </label>
               <label className="block text-sm font-medium">
                 Quantité
-                <Input name="quantity" type="number" step="0.1" min="0" defaultValue="0" className="mt-1 min-h-12" />
+                <Input name="quantity" type="number" step="0.1" min="0" defaultValue="0" className="mt-1 min-h-11" />
               </label>
               <label className="block text-sm font-medium">
                 Prix d’achat
-                <Input name="unitPrice" type="number" step="0.01" min="0" defaultValue="0" className="mt-1 min-h-12" />
+                <Input name="unitPrice" type="number" step="0.01" min="0" defaultValue="0" className="mt-1 min-h-11" />
               </label>
               <label className="block text-sm font-medium">
                 Seuil d’alerte
-                <Input name="lowStockThreshold" type="number" step="0.1" min="0" placeholder="—" className="mt-1 min-h-12" />
+                <Input name="lowStockThreshold" type="number" step="0.1" min="0" placeholder="—" className="mt-1 min-h-11" />
               </label>
             </CreateForm>
           </section>

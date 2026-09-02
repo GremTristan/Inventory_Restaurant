@@ -28,17 +28,17 @@ export default async function EquipePage({ searchParams }: { searchParams: Promi
       {sites.length > 1 && <SiteTabs sites={sites} current={site?.id ?? null} basePath="/direction/equipe" />}
 
       {site && (
-        <section className="mb-6 rounded-card bg-card p-4 shadow-sm sm:p-5">
+        <section className="mb-8 rounded-card bg-card p-5 shadow-sm">
           <h2 className="mb-3 text-base font-bold text-foreground">Ajouter à l’équipe de {site.name}</h2>
           <CreateForm action={addStaffAction} submitLabel="Ajouter" className="grid gap-3 sm:grid-cols-[1fr_10rem_9rem_auto] sm:items-end">
             <input type="hidden" name="siteId" value={site.id} />
             <label className="block text-sm font-medium">
               Prénom
-              <Input name="name" required placeholder="Camille" autoComplete="off" className="mt-1 min-h-12" />
+              <Input name="name" required placeholder="Camille" autoComplete="off" className="mt-1 min-h-11" />
             </label>
             <label className="block text-sm font-medium">
               Rôle
-              <Select name="role" defaultValue="waiter" className="mt-1 min-h-12 w-full">
+              <Select name="role" defaultValue="waiter" className="mt-1 min-h-11 w-full">
                 {STAFF_ROLES.map((r) => (
                   <option key={r} value={r}>
                     {ROLE_LABELS[r]}
@@ -48,7 +48,7 @@ export default async function EquipePage({ searchParams }: { searchParams: Promi
             </label>
             <label className="block text-sm font-medium">
               Code à 4 chiffres
-              <Input name="pin" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} required placeholder="1234" autoComplete="off" className="mt-1 min-h-12 text-center text-lg tracking-[0.4em]" />
+              <Input name="pin" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} required placeholder="1234" autoComplete="off" className="mt-1 min-h-11 text-center text-lg tracking-[0.4em]" />
             </label>
           </CreateForm>
         </section>
@@ -132,20 +132,20 @@ export default async function EquipePage({ searchParams }: { searchParams: Promi
             </li>
           ))}
         </ul>
-        <div className="rounded-card bg-card p-4 shadow-sm sm:p-5">
+        <div className="rounded-card bg-card p-5 shadow-sm">
           <h3 className="mb-3 text-base font-bold text-foreground">Ajouter un compte direction</h3>
           <CreateForm action={inviteDirectorAction} submitLabel="Créer l’accès" className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
             <label className="block text-sm font-medium">
               Nom
-              <Input name="name" required className="mt-1 min-h-12" />
+              <Input name="name" required className="mt-1 min-h-11" />
             </label>
             <label className="block text-sm font-medium">
               E-mail
-              <Input name="email" type="email" required className="mt-1 min-h-12" />
+              <Input name="email" type="email" required className="mt-1 min-h-11" />
             </label>
             <label className="block text-sm font-medium">
               Mot de passe provisoire
-              <Input name="password" type="text" required minLength={10} autoComplete="off" className="mt-1 min-h-12" />
+              <Input name="password" type="text" required minLength={10} autoComplete="off" className="mt-1 min-h-11" />
             </label>
           </CreateForm>
         </div>

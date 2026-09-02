@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 
 export function PageHeader({ title, description, action }: { title: string; description?: string; action?: React.ReactNode }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">{title}</h1>
-        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <div className="min-w-0 max-w-2xl">
+        <h1 className="text-[28px] font-bold leading-tight tracking-tight text-foreground">{title}</h1>
+        {description && <p className="mt-1.5 text-[15px] leading-relaxed text-muted-foreground">{description}</p>}
       </div>
       {action}
     </div>
@@ -16,11 +16,11 @@ export function PageHeader({ title, description, action }: { title: string; desc
 
 export function Stat({ label, value, hint, tone }: { label: string; value: string; hint?: string; tone?: "accent" | "warning" | "destructive" }) {
   return (
-    <div className="rounded-card bg-card p-4 shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)] sm:p-5">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+    <div className="rounded-card bg-card p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_16px_-4px_rgba(0,0,0,0.08)]">
+      <p className="text-[13px] font-medium tracking-tight text-muted-foreground">{label}</p>
       <p
         className={cn(
-          "mt-1 text-2xl font-bold tabular-nums sm:text-3xl",
+          "mt-2 text-[28px] font-bold leading-none tracking-tight tabular-nums",
           tone === "warning" && "text-warning",
           tone === "destructive" && "text-destructive",
           tone === "accent" && "text-accent",
@@ -29,13 +29,11 @@ export function Stat({ label, value, hint, tone }: { label: string; value: strin
       >
         {value}
       </p>
-      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+      {hint && <p className="mt-2 text-[13px] leading-snug text-muted-foreground">{hint}</p>}
     </div>
   );
 }
 
-// Site chooser as links (URL = state): shareable, back-button friendly,
-// no client JS.
 export function SiteTabs({
   sites,
   current,
@@ -60,7 +58,7 @@ export function SiteTabs({
       key={key}
       href={href}
       className={cn(
-        "min-h-11 inline-flex shrink-0 items-center rounded-pill px-4 text-sm font-semibold transition-colors",
+        "min-h-10 inline-flex shrink-0 items-center rounded-pill px-4 text-[14px] font-semibold tracking-tight transition-colors",
         active ? "bg-accent text-accent-foreground" : "bg-card text-foreground shadow-sm hover:bg-muted"
       )}
     >
@@ -68,7 +66,7 @@ export function SiteTabs({
     </Link>
   );
   return (
-    <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+    <div className="mb-6 flex gap-2 overflow-x-auto pb-1">
       {allLabel && tab(href(null), allLabel, current === null, "all")}
       {sites.map((site) => tab(href(site.id), site.name, current === site.id, site.id))}
     </div>
@@ -77,10 +75,10 @@ export function SiteTabs({
 
 export function EmptyState({ title, description, children }: { title: string; description?: string; children?: React.ReactNode }) {
   return (
-    <div className="rounded-card border-2 border-dashed border-border p-8 text-center">
-      <p className="text-base font-semibold text-foreground">{title}</p>
-      {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
-      {children && <div className="mt-4 flex justify-center">{children}</div>}
+    <div className="rounded-card border border-dashed border-border bg-card/70 px-6 py-10 text-center">
+      <p className="text-[17px] font-semibold tracking-tight text-foreground">{title}</p>
+      {description && <p className="mx-auto mt-2 max-w-sm text-[15px] leading-relaxed text-muted-foreground">{description}</p>}
+      {children && <div className="mt-5 flex justify-center">{children}</div>}
     </div>
   );
 }

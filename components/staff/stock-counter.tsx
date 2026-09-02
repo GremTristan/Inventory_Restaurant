@@ -76,26 +76,26 @@ export function StockCounter({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Chercher un article…"
-            className="min-h-14 w-full rounded-pill bg-card pl-12 pr-4 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
+            className="min-h-10 w-full rounded-pill bg-card pl-10 pr-3 text-[15px] shadow-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
         </label>
         {due ? (
           <button
             type="button"
             onClick={markInventoryDone}
-            className="flex min-h-14 items-center justify-center gap-2 rounded-pill bg-warning px-5 text-base font-semibold text-warning-foreground"
+            className="flex min-h-10 items-center justify-center gap-1.5 rounded-pill bg-warning px-3.5 text-[13px] font-semibold text-warning-foreground"
           >
             <ClipboardCheck className="h-5 w-5" /> Inventaire du mois : marquer comme fait
           </button>
         ) : (
-          <span className="flex min-h-14 items-center gap-2 rounded-pill bg-card px-5 text-sm font-medium text-success shadow-sm">
+          <span className="flex min-h-10 items-center gap-1.5 rounded-pill bg-card px-3.5 text-[13px] font-medium text-success shadow-sm">
             <CheckCircle2 className="h-5 w-5" /> Inventaire du mois fait
           </span>
         )}
       </div>
 
       {items.length === 0 && (
-        <p className="rounded-card bg-card p-8 text-center text-muted-foreground shadow-sm">
+        <p className="rounded-card bg-card p-5 text-center text-[13px] text-muted-foreground shadow-sm">
           Aucun article de stock. La direction peut en ajouter depuis « Stock ».
         </p>
       )}
@@ -118,7 +118,7 @@ export function StockCounter({
                     )}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-base font-semibold text-foreground">{item.name}</p>
+                      <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">{item.name}</p>
                       <p className="text-xs text-muted-foreground">
                         {item.unit}
                         {item.lowStockThreshold !== null && ` · alerte sous ${formatQty(item.lowStockThreshold)}`}
@@ -129,7 +129,7 @@ export function StockCounter({
                         type="button"
                         aria-label="Moins un"
                         onClick={() => setQuantity(item, item.quantity - 1)}
-                        className="flex h-12 w-12 items-center justify-center rounded-pill bg-muted text-foreground active:scale-95"
+                        className="flex h-10 w-10 items-center justify-center rounded-pill bg-muted text-foreground active:scale-95"
                       >
                         <Minus className="h-5 w-5" />
                       </button>
@@ -146,14 +146,14 @@ export function StockCounter({
                           onKeyDown={(e) => {
                             if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                           }}
-                          className="h-12 w-20 rounded-control bg-muted text-center text-xl font-bold focus:outline-none focus:ring-2 focus:ring-accent/40"
+                          className="h-10 w-16 rounded-control bg-muted text-center text-[15px] font-bold focus:outline-none focus:ring-2 focus:ring-accent/40"
                         />
                       ) : (
                         <button
                           type="button"
                           onClick={() => setEditing(item.id)}
                           className={cn(
-                            "h-12 w-20 rounded-control text-center text-xl font-bold tabular-nums",
+                            "h-10 w-16 rounded-control text-center text-[15px] font-bold tabular-nums",
                             lowItem ? "bg-destructive/10 text-destructive" : "bg-muted text-foreground"
                           )}
                           aria-label="Saisir la quantité"
@@ -165,7 +165,7 @@ export function StockCounter({
                         type="button"
                         aria-label="Plus un"
                         onClick={() => setQuantity(item, item.quantity + 1)}
-                        className="flex h-12 w-12 items-center justify-center rounded-pill bg-muted text-foreground active:scale-95"
+                        className="flex h-10 w-10 items-center justify-center rounded-pill bg-muted text-foreground active:scale-95"
                       >
                         <Plus className="h-5 w-5" />
                       </button>

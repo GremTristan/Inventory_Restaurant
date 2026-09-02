@@ -97,9 +97,9 @@ export function OrderComposer({
     <div className="flex flex-col gap-4 lg:h-[calc(100vh-7rem)] lg:flex-row">
       <OfflineBanner pending={pending} />
       {/* Product picker */}
-      <section className="flex min-w-0 flex-1 flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-xl font-bold text-foreground">
+      <section className="flex min-w-0 flex-1 flex-col gap-4">
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-[17px] font-bold tracking-tight text-foreground">
             {appendTo ? `Ajouter à la commande n° ${appendTo.number}` : "Nouvelle commande"}
           </h1>
         </div>
@@ -110,7 +110,7 @@ export function OrderComposer({
               type="button"
               onClick={() => setCategory(c)}
               className={cn(
-                "min-h-12 shrink-0 rounded-pill px-5 text-base font-semibold transition-colors",
+                "min-h-9 shrink-0 rounded-pill px-3.5 text-[13px] font-semibold transition-colors",
                 category === c ? "bg-accent text-accent-foreground" : "bg-card text-foreground shadow-sm hover:bg-muted"
               )}
             >
@@ -119,11 +119,11 @@ export function OrderComposer({
           ))}
         </div>
         {menu.length === 0 ? (
-          <p className="rounded-card bg-card p-8 text-center text-muted-foreground shadow-sm">
+          <p className="rounded-card bg-card p-5 text-center text-[13px] text-muted-foreground shadow-sm">
             La carte est vide. La direction peut ajouter des produits depuis « Menu ».
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
             {visible.map((item) => {
               const qty = quantityByItem.get(item.id) ?? 0;
               return (
@@ -132,7 +132,7 @@ export function OrderComposer({
                   type="button"
                   onClick={() => add(item)}
                   className={cn(
-                    "relative flex min-h-24 flex-col items-start justify-between rounded-card border-2 bg-card p-3 text-left shadow-sm transition-transform active:scale-[0.96] select-none touch-manipulation",
+                    "relative flex min-h-16 flex-col items-start justify-between rounded-card border bg-card p-2.5 text-left lg:min-h-20 shadow-sm transition-transform active:scale-[0.96] select-none touch-manipulation",
                     qty > 0 ? "border-accent" : "border-transparent hover:border-border"
                   )}
                 >
@@ -153,13 +153,13 @@ export function OrderComposer({
       {/* Cart */}
       <aside className="flex w-full flex-col rounded-card bg-card shadow-sm lg:w-96 lg:shrink-0">
         {!appendTo && (
-          <div className="flex flex-col gap-3 border-b border-border p-4">
+          <div className="flex flex-col gap-4 border-b border-border p-4">
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setKind("table")}
                 className={cn(
-                  "flex min-h-14 items-center justify-center gap-2 rounded-control text-base font-semibold",
+                  "flex min-h-10 items-center justify-center gap-1.5 rounded-control text-[13px] font-semibold",
                   kind === "table" ? "bg-accent text-accent-foreground" : "bg-muted text-foreground"
                 )}
               >
@@ -169,7 +169,7 @@ export function OrderComposer({
                 type="button"
                 onClick={() => setKind("takeaway")}
                 className={cn(
-                  "flex min-h-14 items-center justify-center gap-2 rounded-control text-base font-semibold",
+                  "flex min-h-10 items-center justify-center gap-1.5 rounded-control text-[13px] font-semibold",
                   kind === "takeaway" ? "bg-accent text-accent-foreground" : "bg-muted text-foreground"
                 )}
               >
@@ -177,14 +177,14 @@ export function OrderComposer({
               </button>
             </div>
             {kind === "table" && (
-              <label className="flex items-center gap-3">
+              <label className="flex items-center gap-4">
                 <span className="text-sm font-medium text-foreground">Table n°</span>
                 <input
                   value={tableLabel}
                   onChange={(e) => setTableLabel(e.target.value.slice(0, 6))}
                   inputMode="numeric"
                   placeholder="12"
-                  className="min-h-14 w-full rounded-control bg-muted px-4 text-center text-2xl font-bold text-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  className="min-h-10 w-full rounded-control bg-muted px-3 text-center text-[17px] font-bold tracking-tight text-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-accent/40"
                 />
               </label>
             )}
@@ -260,13 +260,13 @@ export function OrderComposer({
             type="button"
             onClick={send}
             disabled={cart.length === 0 || sending}
-            className="flex min-h-[4.5rem] w-full items-center justify-between rounded-card bg-accent px-5 text-accent-foreground shadow-sm transition-transform active:scale-[0.98] disabled:opacity-40 select-none touch-manipulation"
+            className="flex min-h-12 w-full items-center justify-between rounded-card bg-accent px-4 lg:min-h-14 text-accent-foreground shadow-sm transition-transform active:scale-[0.98] disabled:opacity-40 select-none touch-manipulation"
           >
             <span className="flex items-center gap-2 text-lg font-bold">
               <Send className="h-6 w-6" /> {appendTo ? "Ajouter et envoyer" : "Envoyer en cuisine"}
             </span>
             <span className="text-right">
-              <span className="block text-xl font-bold tabular-nums">{formatMoney(total, currency)}</span>
+              <span className="block text-[17px] font-bold tracking-tight tabular-nums">{formatMoney(total, currency)}</span>
               <span className="block text-xs opacity-80">{count} article{count > 1 ? "s" : ""}</span>
             </span>
           </button>

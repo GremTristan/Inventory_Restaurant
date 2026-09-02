@@ -46,21 +46,21 @@ export default async function MenuPage({ searchParams }: { searchParams: Promise
       />
       <SiteTabs sites={sites} current={site.id} basePath="/direction/menu" />
 
-      <section className="mb-6 rounded-card bg-card p-4 shadow-sm sm:p-5">
+      <section className="mb-8 rounded-card bg-card p-5 shadow-sm">
         <h2 className="mb-3 text-base font-bold text-foreground">Ajouter un produit</h2>
         <CreateForm action={addMenuItemAction} submitLabel="Ajouter" className="grid gap-3 sm:grid-cols-[1fr_8rem_10rem_auto] sm:items-end">
           <input type="hidden" name="siteId" value={site.id} />
           <label className="block text-sm font-medium">
             Nom
-            <Input name="name" required placeholder="Complète" className="mt-1 min-h-12" />
+            <Input name="name" required placeholder="Complète" className="mt-1 min-h-11" />
           </label>
           <label className="block text-sm font-medium">
             Prix ({tenant.currency})
-            <Input name="price" type="number" step="0.10" min="0" required placeholder="14.00" className="mt-1 min-h-12" />
+            <Input name="price" type="number" step="0.10" min="0" required placeholder="14.00" className="mt-1 min-h-11" />
           </label>
           <label className="block text-sm font-medium">
             Catégorie
-            <Select name="category" defaultValue="salee" className="mt-1 min-h-12 w-full">
+            <Select name="category" defaultValue="salee" className="mt-1 min-h-11 w-full">
               {MENU_CATEGORY_ORDER.map((c) => (
                 <option key={c} value={c}>
                   {MENU_CATEGORY_LABELS[c]}

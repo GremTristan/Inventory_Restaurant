@@ -41,8 +41,8 @@ export function PinLogin({ staff }: { staff: User[] }) {
   if (!selected) {
     return (
       <div>
-        <p className="mb-4 text-center text-lg font-semibold text-foreground">Qui êtes-vous ?</p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <p className="mb-5 text-center text-[20px] font-bold tracking-tight text-foreground">Qui êtes-vous ?</p>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {staff.map((member) => {
             const Icon = member.role === "cook" ? ChefHat : HandPlatter;
             return (
@@ -50,12 +50,12 @@ export function PinLogin({ staff }: { staff: User[] }) {
                 key={member.id}
                 type="button"
                 onClick={() => setSelected(member)}
-                className="flex min-h-28 flex-col items-center justify-center gap-2 rounded-card bg-card p-4 text-center shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)] transition-transform active:scale-[0.97] hover:bg-muted/60"
+                className="flex min-h-28 flex-col items-center justify-center gap-2.5 rounded-card bg-card p-5 text-center shadow-[0_1px_2px_rgba(20,24,27,0.04),0_8px_24px_-8px_rgba(20,24,27,0.08)] transition-transform active:scale-[0.97] hover:bg-muted/60"
               >
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-accent">
                   <Icon className="h-6 w-6" />
                 </span>
-                <span className="text-base font-semibold leading-tight text-foreground">{member.name}</span>
+                <span className="text-[15px] font-semibold leading-tight tracking-tight text-foreground">{member.name}</span>
                 <span className="text-xs text-muted-foreground">{ROLE_LABELS[member.role]}</span>
               </button>
             );
@@ -74,7 +74,7 @@ export function PinLogin({ staff }: { staff: User[] }) {
 
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <p className="text-lg font-semibold text-foreground">{selected.name}</p>
+          <p className="text-[18px] font-bold tracking-tight text-foreground">{selected.name}</p>
           <p className="text-xs text-muted-foreground">{ROLE_LABELS[selected.role]}</p>
         </div>
         {staff.length > 1 && (

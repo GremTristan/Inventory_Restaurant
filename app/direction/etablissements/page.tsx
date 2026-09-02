@@ -23,12 +23,12 @@ export default async function EtablissementsPage() {
         description="Chaque point de vente a son code tablette : saisi une fois sur la tablette, il donne accès au pavé de connexion de l’équipe."
       />
 
-      <section className="mb-6 rounded-card bg-card p-4 shadow-sm sm:p-5">
+      <section className="mb-8 rounded-card bg-card p-5 shadow-sm">
         <h2 className="mb-3 text-base font-bold text-foreground">Ouvrir un nouvel établissement</h2>
         <CreateForm action={addSiteAction} submitLabel="Créer" className="flex flex-wrap items-end gap-3">
           <label className="block min-w-64 flex-1 text-sm font-medium">
             Nom
-            <Input name="name" required placeholder="Lausanne – Flon" className="mt-1 min-h-12" />
+            <Input name="name" required placeholder="Lausanne – Flon" className="mt-1 min-h-11" />
           </label>
         </CreateForm>
         <p className="mt-2 text-xs text-muted-foreground">Facturé par établissement actif — voir « Abonnement ».</p>
@@ -41,7 +41,7 @@ export default async function EtablissementsPage() {
             <li key={site.id} className={cn("rounded-card bg-card p-5 shadow-sm", !site.active && "opacity-60")}>
               <AutoSaveForm action={updateSiteAction}>
                 <input type="hidden" name="id" value={site.id} />
-                <Input name="name" defaultValue={site.name} aria-label="Nom de l’établissement" className="min-h-12 text-lg font-bold" />
+                <Input name="name" defaultValue={site.name} aria-label="Nom de l’établissement" className="min-h-11 text-lg font-bold" />
               </AutoSaveForm>
               <p className="mt-2 text-sm text-muted-foreground">
                 {team} personne{team > 1 ? "s" : ""} dans l’équipe · {site.active ? "actif" : "désactivé"}
@@ -51,7 +51,7 @@ export default async function EtablissementsPage() {
                 <Tablet className="h-6 w-6 shrink-0 text-accent" />
                 <div className="flex-1">
                   <p className="text-xs font-medium text-muted-foreground">Code tablette</p>
-                  <p className="font-mono text-2xl font-bold tracking-[0.3em] text-foreground">{site.deviceCode}</p>
+                  <p className="font-mono text-[20px] font-bold tracking-tight tracking-[0.3em] text-foreground">{site.deviceCode}</p>
                 </div>
                 <ActionButton action={updateSiteAction} fields={{ id: site.id, rotateCode: "1" }} message="Nouveau code généré — les tablettes déjà reliées restent connectées" variant="ghost" size="icon" aria-label="Générer un nouveau code">
                   <RefreshCw className="h-5 w-5" />
@@ -59,10 +59,10 @@ export default async function EtablissementsPage() {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <Link href={`/direction/equipe?site=${site.id}`} className="min-h-10 inline-flex items-center rounded-pill bg-muted px-4 text-sm font-medium hover:bg-border/60">
+                <Link href={`/direction/equipe?site=${site.id}`} className="min-h-11 inline-flex items-center rounded-pill bg-muted px-4 text-sm font-medium hover:bg-border/60">
                   Équipe
                 </Link>
-                <Link href={`/direction/menu?site=${site.id}`} className="min-h-10 inline-flex items-center rounded-pill bg-muted px-4 text-sm font-medium hover:bg-border/60">
+                <Link href={`/direction/menu?site=${site.id}`} className="min-h-11 inline-flex items-center rounded-pill bg-muted px-4 text-sm font-medium hover:bg-border/60">
                   Menu
                 </Link>
                 <ActionButton
