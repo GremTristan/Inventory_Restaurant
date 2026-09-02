@@ -141,7 +141,7 @@ ALTER TABLE "receipts" ADD CONSTRAINT "receipts_site_id_sites_id_fk" FOREIGN KEY
 CREATE INDEX "receipts_site_id_idx" ON "receipts" USING btree ("site_id");--> statement-breakpoint
 
 -- users: staff keep their PIN (moved to pin_hash); directors switch to
--- email + password (bootstrapped by scripts/bootstrap-accounts.ts).
+-- email + password (bootstrapped by `npm run seed:chain`).
 ALTER TABLE "users" ADD COLUMN "site_uuid" uuid;--> statement-breakpoint
 UPDATE "users" u SET "site_uuid" = s."id" FROM "sites" s WHERE s."slug" = u."site_id"::text;--> statement-breakpoint
 ALTER TABLE "users" DROP COLUMN "site_id";--> statement-breakpoint

@@ -28,7 +28,7 @@ export default async function MenuPage({ searchParams }: { searchParams: Promise
     <>
       <PageHeader
         title="Menu"
-        description="Produits, prix et disponibilité. Un produit indisponible disparaît immédiatement des tablettes."
+        description="Produits, prix, disponibilité et recettes. « Copier cette carte » propage aussi les recettes vers les autres établissements (par nom d’article de stock)."
         action={
           sites.length > 1 ? (
             <ActionButton

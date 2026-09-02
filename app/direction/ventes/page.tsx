@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Download } from "lucide-react";
 import { EmptyState, PageHeader, SiteTabs, Stat } from "@/components/direction/ui";
+import { canUse } from "@/lib/billing/plans";
 import { addDays, formatDayLabel, startOfMonth, startOfWeek, todayPeriod } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { pageDirector } from "@/lib/page-guards";
@@ -34,6 +35,7 @@ export default async function VentesPage({ searchParams }: { searchParams: Promi
   const period: Period = (["jour", "semaine", "mois", "30j"] as Period[]).includes(params.periode as Period) ? (params.periode as Period) : "semaine";
   const siteId = sites.some((s) => s.id === params.site) ? params.site! : null;
   const { from, to, label } = range(period);
+  const exportsEnabled = canUse(tenant, "exports");
 
   const report = await salesReport(tenant.id, siteId ? sites.filter((s) => s.id === siteId) : sites, from, to);
   const scoped = siteId
@@ -53,12 +55,22 @@ export default async function VentesPage({ searchParams }: { searchParams: Promi
         title="Ventes"
         description="Chiffre d’affaires encaissé, produits les plus vendus, comparaison entre établissements."
         action={
-          <Link
-            href={`/api/export/ventes${query({})}`}
-            className="inline-flex min-h-11 items-center gap-2 rounded-pill bg-muted px-4 text-sm font-semibold text-foreground hover:bg-border/60"
-          >
-            <Download className="h-4 w-4" /> Export tableur (CSV)
-          </Link>
+          exportsEnabled ? (
+            <Link
+              href={`/api/export/ventes${query({})}`}
+              className="inline-flex min-h-11 items-center gap-2 rounded-pill bg-muted px-4 text-sm font-semibold text-foreground hover:bg-border/60"
+            >
+              <Download className="h-4 w-4" /> Export tableur (CSV)
+            </Link>
+          ) : (
+            <Link
+              href="/direction/abonnement"
+              className="inline-flex min-h-11 items-center gap-2 rounded-pill bg-muted px-4 text-sm font-semibold text-muted-foreground hover:bg-border/60"
+              title="Inclus dans la formule Pro"
+            >
+              <Download className="h-4 w-4" /> Export Pro
+            </Link>
+          )
         }
       />
 
