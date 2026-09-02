@@ -20,11 +20,12 @@ import { CATEGORY_LABELS, CATEGORY_ORDER } from "@/types";
 
 export const metadata: Metadata = { title: "Stock" };
 
-export default async function StockPage({ searchParams }: { searchParams: Promise<{ site?: string }> }) {
-  const { site: siteParam } = await searchParams;
+export default async function StockPage({ searchParams }: { searchParams: Promise<{ site?: string; focus?: string }> }) {
+  const { site: siteParam, focus } = await searchParams;
   const { tenant } = await pageDirector();
   const sites = (await getSitesForTenant(tenant.id)).filter((s) => s.active);
   const site = sites.find((s) => s.id === siteParam) ?? null;
+  const focusLow = focus === "low";
 
   const [items, suppliers, all] = await Promise.all([
     site ? getInventoryBySite(site.id) : Promise.resolve([]),
@@ -33,13 +34,71 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
   ]);
   const supplierName = new Map(suppliers.map((s) => [s.id, s.name]));
   const value = (list: typeof all) => list.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+  const lowItems = (site ? items : all).filter(isLowStock);
 
   return (
     <>
-      <PageHeader title="Stock" description="Valeur du stock, seuils d’alerte et fournisseurs. Les cuisiniers ne voient jamais les prix." />
-      <SiteTabs sites={sites} current={site?.id ?? null} basePath="/direction/stock" allLabel="Vue consolidée" />
+      <PageHeader
+        title="Stock"
+        description={
+          focusLow
+            ? "Exceptions uniquement — quantités sous le seuil d’alerte."
+            : "Seuils, commandes à passer, fournisseurs. Les prix restent cachés aux tablettes cuisine/salle."
+        }
+      />
+      <SiteTabs sites={sites} current={site?.id ?? null} basePath="/direction/stock" allLabel="Vue consolidée" query={focusLow ? { focus: "low" } : {}} />
 
-      {!site ? (
+      {/* EXCEPTION-FIRST — always surface anomalies before the full catalog */}
+      {lowItems.length > 0 && (
+        <section className="mb-5 rounded-lg border border-destructive/30 bg-card p-3.5">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="flex items-center gap-2 text-[14px] font-semibold text-foreground">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              {lowItems.length} à traiter
+            </h2>
+            {!focusLow && (
+              <a href={site ? `/direction/stock?site=${site.id}&focus=low` : "/direction/stock?focus=low"} className="text-[12px] font-medium text-muted-foreground hover:text-foreground">
+                Voir seulement les exceptions →
+              </a>
+            )}
+          </div>
+          <ul className="mt-2.5 space-y-1.5">
+            {lowItems.slice(0, 12).map((i) => {
+              const siteLabel = site ? null : sites.find((s) => s.id === i.siteId)?.name;
+              return (
+                <li key={i.id} className="flex items-center justify-between gap-3 rounded-md bg-destructive/5 px-2.5 py-2 text-[13px]">
+                  <span className="min-w-0 truncate font-medium text-foreground">
+                    {i.name}
+                    {siteLabel && <span className="text-muted-foreground"> · {siteLabel}</span>}
+                  </span>
+                  <span className="shrink-0 font-mono text-[12px] tabular-nums text-destructive">
+                    {i.quantity} / {i.lowStockThreshold} {i.unit}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          {site && (
+            <a
+              href={`/s/${site.id}/stock`}
+              className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-md bg-foreground text-[13px] font-medium text-background hover:bg-foreground/90"
+            >
+              Compter sur la tablette
+            </a>
+          )}
+        </section>
+      )}
+
+      {focusLow && lowItems.length === 0 && (
+        <p className="mb-5 rounded-lg border border-dashed border-border bg-card px-4 py-6 text-center text-[13px] text-muted-foreground">
+          Aucune exception stock.{" "}
+          <a href={site ? `/direction/stock?site=${site.id}` : "/direction/stock"} className="font-medium text-foreground underline-offset-2 hover:underline">
+            Voir tout le catalogue
+          </a>
+        </p>
+      )}
+
+      {!focusLow && !site ? (
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Stat label="Valeur totale du stock" value={formatMoney(value(all), tenant.currency)} tone="accent" />
@@ -93,7 +152,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
             </form>
           </section>
         </>
-      ) : (
+      ) : !focusLow && site ? (
         <>
           <section className="mb-8 rounded-lg border border-border bg-card p-4">
             <h2 className="mb-3 text-base font-bold text-foreground">Ajouter un article — {site.name}</h2>
@@ -204,7 +263,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
             })
           )}
         </>
-      )}
+      ) : null}
     </>
   );
 }

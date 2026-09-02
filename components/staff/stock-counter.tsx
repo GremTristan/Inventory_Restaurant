@@ -55,14 +55,21 @@ export function StockCounter({
       <OfflineBanner pending={pending} />
 
       {low.length > 0 && (
-        <section className="rounded-lg border border-destructive/40 bg-card p-4 shadow-sm">
-          <h2 className="flex items-center gap-2 text-lg font-bold text-destructive">
-            <AlertTriangle className="h-5 w-5" /> À commander ({low.length})
+        <section className="rounded-lg border border-destructive/30 bg-card p-3.5">
+          <h2 className="flex items-center gap-2 text-[14px] font-semibold text-foreground">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            {low.length} produit{low.length > 1 ? "s" : ""} sous seuil
           </h2>
-          <ul className="mt-2 flex flex-wrap gap-2">
+          <p className="mt-1 text-[12px] text-muted-foreground">Ajustez la quantité ci-dessous, ou notez la commande fournisseur.</p>
+          <ul className="mt-2.5 space-y-1.5">
             {low.map((item) => (
-              <li key={item.id} className="rounded-md bg-destructive/10 px-3 py-1.5 text-sm font-semibold text-destructive">
-                {item.name} · {formatQty(item.quantity)} {item.unit}
+              <li key={item.id} className="flex items-center justify-between gap-3 rounded-md bg-destructive/5 px-2.5 py-2 text-[13px]">
+                <button type="button" className="min-w-0 truncate text-left font-medium text-foreground" onClick={() => setEditing(item.id)}>
+                  {item.name}
+                </button>
+                <span className="shrink-0 font-mono text-[12px] tabular-nums text-destructive">
+                  {formatQty(item.quantity)} {item.unit}
+                </span>
               </li>
             ))}
           </ul>

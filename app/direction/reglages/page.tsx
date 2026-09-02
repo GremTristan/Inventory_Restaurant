@@ -10,7 +10,7 @@ import { canUse } from "@/lib/billing/plans";
 import { changePasswordAction, requestDeletionAction, updateBrandAction } from "@/lib/direction-actions";
 import { pageDirector } from "@/lib/page-guards";
 
-export const metadata: Metadata = { title: "Réglages" };
+export const metadata: Metadata = { title: "Plus" };
 
 export default async function ReglagesPage() {
   const { tenant } = await pageDirector({ allowInactiveTenant: true });
@@ -18,10 +18,27 @@ export default async function ReglagesPage() {
 
   return (
     <>
-      <PageHeader title="Réglages" description="Identité de votre enseigne, mentions sur les tickets, sécurité et données." />
+      <PageHeader title="Plus" description="Menu, sites, facturation et réglages de l’enseigne." />
+
+      <nav className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Raccourcis">
+        {[
+          { href: "/direction/menu", label: "Menu" },
+          { href: "/direction/etablissements", label: "Sites" },
+          { href: "/direction/abonnement", label: "Billing" },
+          { href: "/direction", label: "Accueil" },
+        ].map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            className="inline-flex h-11 items-center justify-center rounded-md border border-border bg-card text-[13px] font-medium text-foreground hover:bg-muted"
+          >
+            {l.label}
+          </Link>
+        ))}
+      </nav>
 
       <section className="rounded-lg border border-border bg-card p-4">
-        <h2 className="text-base font-bold text-foreground">Enseigne et tickets</h2>
+        <h2 className="text-[15px] font-semibold tracking-tight text-foreground">Enseigne et tickets</h2>
         <CreateForm action={updateBrandAction} submitLabel="Enregistrer" resetOnSuccess={false} className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block text-sm font-medium">
             Nom de l’enseigne
