@@ -1,32 +1,32 @@
-import "dotenv/config";
+// Applies pending SQL migrations from ./drizzle to the database.
+// Usage: npm run db:migrate   (uses DATABASE_URL_UNPOOLED, falls back to DATABASE_URL)
 import { config } from "dotenv";
-config({ path: ".env.local" });
-
 import { neon, neonConfig } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { migrate } from "drizzle-orm/neon-http/migrator";
 
-// Applies the Drizzle migrations in ./drizzle over the Neon serverless HTTP
-// transport — the same transport the app uses (lib/db/client.ts). This is
-// used instead of `drizzle-kit migrate` for local development, because
-// drizzle-kit connects over a WebSocket that the local-neon-http-proxy path
-// doesn't expose; the HTTP migrator works against the local proxy and the
-// real Neon endpoint alike.
+config({ path: ".env.local", quiet: true });
+config({ quiet: true });
+
+// Same HTTP transport as lib/db/client.ts so local Neon proxy and hosted
+// Neon both work (`drizzle-kit migrate` uses a WebSocket the proxy lacks).
 if (process.env.NEON_LOCAL_FETCH_ENDPOINT) {
   neonConfig.fetchEndpoint = process.env.NEON_LOCAL_FETCH_ENDPOINT;
   neonConfig.useSecureWebSocket = false;
   neonConfig.poolQueryViaFetch = true;
 }
 
-const sql = neon(process.env.DATABASE_URL!);
-const db = drizzle(sql);
+async function main() {
+  const url = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error("DATABASE_URL_UNPOOLED (or DATABASE_URL) is required");
+  }
+  const db = drizzle(neon(url));
+  await migrate(db, { migrationsFolder: "./drizzle" });
+  console.log("Migrations applied.");
+}
 
-migrate(db, { migrationsFolder: "./drizzle" })
-  .then(() => {
-    console.log("Migrations applied.");
-    process.exit(0);
-  })
-  .catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

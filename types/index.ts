@@ -1,37 +1,72 @@
-export type Role = "manager" | "director" | "waiter";
+export type Role = "cook" | "director" | "waiter" | "superadmin";
 
+// Business vocabulary only — never the internal enum value.
 export const ROLE_LABELS: Record<Role, string> = {
-  manager: "Chef crêpier",
-  director: "Directeur",
-  waiter: "Serveur",
+  cook: "Cuisine",
+  director: "Direction",
+  waiter: "Service",
+  superadmin: "Éditeur",
 };
 
-export type SiteId = "bdf" | "carouge" | "molard" | "vevey" | "philosophe" | "hoshy";
+// Roles a director can create for their team.
+export const STAFF_ROLES: Exclude<Role, "director" | "superadmin">[] = ["waiter", "cook"];
+
+export type TenantStatus = "trial" | "active" | "past_due" | "canceled" | "suspended";
+export type Plan = "essentiel" | "pro";
+
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  brandColor: string | null;
+  logoUrl: string | null;
+  currency: string;
+  status: TenantStatus;
+  plan: Plan;
+  trialEndsAt: string | null; // ISO
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  billingEmail: string | null;
+  legalName: string | null;
+  legalAddress: string | null;
+  createdAt: string; // ISO
+}
+
+// Site ids are uuids now; the alias is kept so call sites read as intent.
+export type SiteId = string;
 
 export interface Site {
   id: SiteId;
+  tenantId: string;
   name: string;
+  slug: string;
+  deviceCode: string;
+  active: boolean;
 }
 
 export interface User {
   id: string;
+  tenantId: string | null;
   name: string;
   role: Role;
-  // Only set for managers; directors can access every site.
+  // Set for cooks/waiters; null for directors (all sites) and super-admins.
   siteId: SiteId | null;
+  email: string | null;
+  active: boolean;
 }
 
-// Server-only shape carrying the hashed PIN. Never returned to a Client
-// Component — lib/user-store.ts strips passwordHash before returning a
-// User to any UI-facing caller. Kept as a separate type (rather than an
-// optional field on User) so a stray `user` prop passed to a "use client"
-// component can never accidentally leak the hash through serialization.
+// Server-only shape carrying credential hashes. Never returned to a Client
+// Component — lib/user-store.ts strips them before returning a User.
 export interface AuthUser extends User {
-  passwordHash: string;
+  passwordHash: string | null;
+  pinHash: string | null;
+  failedAttempts: number;
+  lockedUntil: string | null;
 }
 
 export interface Supplier {
   id: string;
+  tenantId: string;
   name: string;
 }
 
@@ -50,10 +85,6 @@ export const CATEGORY_LABELS: Record<Category, string> = {
 // meat, drinks.
 export const CATEGORY_ORDER: Category[] = ["frais", "sec", "sucre", "viande", "boissons"];
 
-// Category color identity: a small dot + left-border accent only — the
-// table body itself always stays neutral. Values point at the
-// --category-* tokens in app/globals.css (same hues as before, now
-// tokenized) so icon containers/rings/charts share one source of truth.
 export const CATEGORY_COLORS: Record<Category, { dot: string; border: string }> = {
   frais: { dot: "bg-category-frais", border: "border-category-frais" },
   sec: { dot: "bg-category-sec", border: "border-category-sec" },
@@ -62,9 +93,6 @@ export const CATEGORY_COLORS: Record<Category, { dot: string; border: string }> 
   boissons: { dot: "bg-category-boissons", border: "border-category-boissons" },
 };
 
-// Physical area an article is stocked in — separate axis from Category
-// (which classifies by product type). Drives the director's Cuisine/Salle
-// inventory tabs.
 export type Zone = "cuisine" | "salle";
 
 export const ZONE_LABELS: Record<Zone, string> = {
@@ -74,29 +102,27 @@ export const ZONE_LABELS: Record<Zone, string> = {
 
 export interface InventoryItem {
   id: string;
+  tenantId: string;
   siteId: SiteId;
   name: string;
   zone: Zone;
-  // Label for the purchasing unit tracked by `quantity` (e.g. "pack",
-  // "douzaine", "kg", "bouteille") — always the unit actually counted in
-  // stock, never a sub-unit like "œuf" or "L" when the item is bought
-  // packaged.
   unit: string;
-  // How many base sub-units (eggs, liters, grams…) one `unit` contains.
-  // 1 for items whose unit already is the base sub-unit (kg, L, bouteille).
   unitsPerPackage: number;
-  // Label for the base sub-unit unitsPerPackage counts, shown alongside the
-  // derived total (e.g. "œufs", "L"). Omitted when unitsPerPackage is 1.
   packageContentLabel?: string;
   quantity: number;
   unitPrice: number;
+  // Below this quantity the item is flagged as running out; null = no alert.
+  lowStockThreshold: number | null;
   supplierId: string | null;
   visibleToManager: boolean;
   visibleToServer: boolean;
   category: Category;
 }
 
-// Derived shape used once quantity * unitPrice has been computed.
+// Cost-free projection handed to operational roles (cook, waiter): they
+// count stock, they never see purchase prices or stock value.
+export type StaffInventoryItem = Omit<InventoryItem, "unitPrice" | "supplierId">;
+
 export interface InventoryItemWithValue extends InventoryItem {
   stockValue: number;
 }
@@ -108,94 +134,122 @@ export interface SiteInventoryValue {
   itemCount: number;
 }
 
-// Sellable product (crêpe, drink…) tracked in the daily sales entry —
-// distinct from InventoryItem, which tracks stock ingredients, not menu
-// items. Scoped per site: each établissement has its own crêpes/drinks, so
-// menus are never shared across sites, managed by the director per site.
+export type MenuCategory = "salee" | "sucree" | "boisson" | "autre";
+
+export const MENU_CATEGORY_LABELS: Record<MenuCategory, string> = {
+  salee: "Salées",
+  sucree: "Sucrées",
+  boisson: "Boissons",
+  autre: "Autres",
+};
+
+export const MENU_CATEGORY_ORDER: MenuCategory[] = ["salee", "sucree", "boisson", "autre"];
+
+// Sellable product (crêpe, drink…) — distinct from InventoryItem (stock).
 export interface MenuItem {
   id: string;
+  tenantId: string;
   siteId: SiteId;
   name: string;
+  price: number;
+  category: MenuCategory;
+  available: boolean;
+  sortOrder: number;
 }
 
-// One record per (siteId, date) — upserted, so a same-day resubmission
-// replaces rather than duplicates.
+export interface MenuItemIngredient {
+  id: string;
+  menuItemId: string;
+  inventoryItemId: string;
+  quantity: number;
+}
+
+export type OrderKind = "table" | "takeaway";
+export type OrderStatus = "open" | "sent" | "ready" | "served" | "paid" | "cancelled";
+export type OrderItemStatus = "pending" | "ready";
+export type PaymentMethod = "cash" | "card" | "twint" | "other";
+
+export type CaptureSource = "native" | "zelty" | "addition" | "lightspeed" | "square" | "ocr" | "backfill";
+export type CaptureEventType =
+  | "order.created"
+  | "order.sent"
+  | "order.ready"
+  | "order.served"
+  | "order.paid"
+  | "order.cancelled"
+  | "order.appended"
+  | "stock.sale"
+  | "stock.count"
+  | "stock.waste"
+  | "stock.adjust";
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  cash: "Espèces",
+  card: "Carte",
+  twint: "TWINT",
+  other: "Autre",
+};
+
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  open: "En cours de saisie",
+  sent: "En cuisine",
+  ready: "Prête",
+  served: "Servie",
+  paid: "Encaissée",
+  cancelled: "Annulée",
+};
+
+export interface OrderItem {
+  id: string;
+  orderId: string;
+  menuItemId: string | null;
+  name: string;
+  unitPrice: number;
+  quantity: number;
+  status: OrderItemStatus;
+  note: string | null;
+}
+
+export interface Order {
+  id: string;
+  tenantId: string;
+  siteId: SiteId;
+  number: number;
+  serviceDate: string; // "YYYY-MM-DD"
+  kind: OrderKind;
+  tableLabel: string | null;
+  status: OrderStatus;
+  note: string | null;
+  total: number;
+  paymentMethod: PaymentMethod | null;
+  createdByUserId: string;
+  createdAt: string; // ISO
+  sentAt: string | null;
+  readyAt: string | null;
+  servedAt: string | null;
+  paidAt: string | null;
+  items: OrderItem[];
+}
+
+// One record per (siteId, date): the end-of-day till closure.
 export interface DailySalesEntry {
   id: string;
+  tenantId: string;
   siteId: SiteId;
   date: string; // "YYYY-MM-DD"
-  // Card payments only.
   cardRevenue: number;
-  // Total revenue, all payment methods combined. Cash is always derived as
-  // netRevenue - cardRevenue at display time, never stored — netRevenue is
-  // guaranteed >= cardRevenue (validated server-side) so it's never negative.
+  twintRevenue: number;
+  // Total revenue, all payment methods combined. Cash is derived as
+  // netRevenue - cardRevenue - twintRevenue at display time.
   netRevenue: number;
-  // menuItemId -> quantity sold. May contain ids for menu items that were
-  // later deleted; callers should skip unknown ids when rendering rather
-  // than treat them as an error.
+  // menuItemId -> quantity sold. May contain ids for deleted menu items.
   quantities: Record<string, number>;
   recordedByUserId: string;
   recordedAt: string; // ISO timestamp
 }
 
-// Structured data pulled from a photographed till receipt by the vision
-// model — used only to prefill daily-sales-form.tsx's inputs before
-// submission, never written to a DailySalesEntry directly. `items` carries
-// already-resolved menu item ids (matching against the site's menu happens
-// server-side in lib/sales-extraction-actions.ts) rather than raw product
-// name strings, so the client never redoes that matching.
-export interface ExtractedSalesData {
-  cardRevenue: number | null;
-  netRevenue: number | null;
-  items: { menuItemId: string; quantity: number }[];
-  // Ticket lines the model returned that couldn't be matched to any menu
-  // item name for this site. Always populated (never dropped server-side)
-  // even though the UI surfaces it as a quiet, non-alarming note.
-  unmatchedCount: number;
-}
-
-// A photo submitted to the AI avatar chat, plus the AI's own summary of it.
-// Persisted (not ephemeral) so a director can later ask the avatar to
-// reference past tickets across sessions — see lib/ai-avatar-store.ts. The
-// conversation text around it is NOT persisted (see AvatarChatMessage);
-// only the receipt + its AI summary survive a page refresh.
-export interface ReceiptRecord {
-  id: string;
-  siteId: SiteId;
-  submittedByUserId: string;
-  submittedAt: string; // ISO timestamp
-  // Relative path under data/receipts/, e.g. "bdf/<uuid>.jpg" — never
-  // absolute (keeps the store portable) and never raw bytes.
-  imagePath: string;
-  imageMediaType: "image/jpeg" | "image/png" | "image/webp" | "image/gif";
-  aiSummary: string;
-}
-
-// One turn in an avatar conversation — used only for in-memory client
-// state (conversation history is ephemeral, never persisted), but declared
-// centrally since both the widget and the server action need the identical
-// shape for request/response typing.
-export interface AvatarChatMessage {
-  role: "user" | "assistant";
-  text: string;
-}
-
-// A structured side effect the avatar's tool-calling loop wants the client
-// to perform, independent of what the model says in prose — see
-// lib/ai-avatar-agent.ts. `type` is a discriminant for components consuming
-// AvatarChatResult.clientActions; add new literal members here alongside new
-// tools in the agent's tool registry.
-export interface AvatarClientAction {
-  type: "fill-sales-form";
-  data: ExtractedSalesData;
-}
-
 export type ReminderKind = "daily-sales" | "monthly-inventory";
 
-// Presence of a record means the task for that (siteId, kind, period) is
-// done. Completion is always an explicit action — either a direct "Marquer
-// comme fait" click, or (for daily-sales only) a side effect of submitting
-// the day's sales form — never inferred from unrelated data changes.
 export interface ReminderCompletion {
   id: string;
   siteId: SiteId;
@@ -203,4 +257,16 @@ export interface ReminderCompletion {
   period: string; // "YYYY-MM-DD" for daily-sales, "YYYY-MM" for monthly-inventory
   completedAt: string; // ISO timestamp
   completedByUserId: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  tenantId: string | null;
+  siteId: string | null;
+  userId: string | null;
+  action: string;
+  targetType: string | null;
+  targetId: string | null;
+  details: Record<string, unknown> | null;
+  createdAt: string;
 }
