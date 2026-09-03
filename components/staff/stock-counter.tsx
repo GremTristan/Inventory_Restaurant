@@ -55,14 +55,21 @@ export function StockCounter({
       <OfflineBanner pending={pending} />
 
       {low.length > 0 && (
-        <section className="rounded-card border-2 border-destructive/40 bg-card p-4 shadow-sm">
-          <h2 className="flex items-center gap-2 text-lg font-bold text-destructive">
-            <AlertTriangle className="h-5 w-5" /> À commander ({low.length})
+        <section className="rounded-lg border border-destructive/30 bg-card p-3.5">
+          <h2 className="flex items-center gap-2 text-[14px] font-semibold text-foreground">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            {low.length} produit{low.length > 1 ? "s" : ""} sous seuil
           </h2>
-          <ul className="mt-2 flex flex-wrap gap-2">
+          <p className="mt-1 text-[12px] text-muted-foreground">Ajustez la quantité ci-dessous, ou notez la commande fournisseur.</p>
+          <ul className="mt-2.5 space-y-1.5">
             {low.map((item) => (
-              <li key={item.id} className="rounded-pill bg-destructive/10 px-3 py-1.5 text-sm font-semibold text-destructive">
-                {item.name} · {formatQty(item.quantity)} {item.unit}
+              <li key={item.id} className="flex items-center justify-between gap-3 rounded-md bg-destructive/5 px-2.5 py-2 text-[13px]">
+                <button type="button" className="min-w-0 truncate text-left font-medium text-foreground" onClick={() => setEditing(item.id)}>
+                  {item.name}
+                </button>
+                <span className="shrink-0 font-mono text-[12px] tabular-nums text-destructive">
+                  {formatQty(item.quantity)} {item.unit}
+                </span>
               </li>
             ))}
           </ul>
@@ -76,26 +83,26 @@ export function StockCounter({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Chercher un article…"
-            className="min-h-14 w-full rounded-pill bg-card pl-12 pr-4 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
+            className="min-h-10 w-full rounded-md bg-card pl-10 pr-3 text-[15px] shadow-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
         </label>
         {due ? (
           <button
             type="button"
             onClick={markInventoryDone}
-            className="flex min-h-14 items-center justify-center gap-2 rounded-pill bg-warning px-5 text-base font-semibold text-warning-foreground"
+            className="flex min-h-10 items-center justify-center gap-1.5 rounded-md bg-warning px-3.5 text-[13px] font-semibold text-warning-foreground"
           >
             <ClipboardCheck className="h-5 w-5" /> Inventaire du mois : marquer comme fait
           </button>
         ) : (
-          <span className="flex min-h-14 items-center gap-2 rounded-pill bg-card px-5 text-sm font-medium text-success shadow-sm">
+          <span className="flex min-h-10 items-center gap-1.5 rounded-md bg-card px-3.5 text-[13px] font-medium text-success shadow-sm">
             <CheckCircle2 className="h-5 w-5" /> Inventaire du mois fait
           </span>
         )}
       </div>
 
       {items.length === 0 && (
-        <p className="rounded-card bg-card p-8 text-center text-muted-foreground shadow-sm">
+        <p className="rounded-lg border border-border bg-card p-5 text-center text-[13px] text-muted-foreground">
           Aucun article de stock. La direction peut en ajouter depuis « Stock ».
         </p>
       )}
@@ -113,12 +120,12 @@ export function StockCounter({
                   <li
                     key={item.id}
                     className={cn(
-                      "flex items-center gap-3 rounded-card border-2 bg-card p-3 shadow-sm",
+                      "flex items-center gap-3 rounded-lg border bg-card p-3 shadow-sm",
                       lowItem ? "border-destructive/50" : "border-transparent"
                     )}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-base font-semibold text-foreground">{item.name}</p>
+                      <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">{item.name}</p>
                       <p className="text-xs text-muted-foreground">
                         {item.unit}
                         {item.lowStockThreshold !== null && ` · alerte sous ${formatQty(item.lowStockThreshold)}`}
@@ -129,7 +136,7 @@ export function StockCounter({
                         type="button"
                         aria-label="Moins un"
                         onClick={() => setQuantity(item, item.quantity - 1)}
-                        className="flex h-12 w-12 items-center justify-center rounded-pill bg-muted text-foreground active:scale-95"
+                        className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-foreground active:scale-95"
                       >
                         <Minus className="h-5 w-5" />
                       </button>
@@ -146,14 +153,14 @@ export function StockCounter({
                           onKeyDown={(e) => {
                             if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                           }}
-                          className="h-12 w-20 rounded-control bg-muted text-center text-xl font-bold focus:outline-none focus:ring-2 focus:ring-accent/40"
+                          className="h-10 w-16 rounded-control bg-muted text-center text-[15px] font-bold focus:outline-none focus:ring-2 focus:ring-accent/40"
                         />
                       ) : (
                         <button
                           type="button"
                           onClick={() => setEditing(item.id)}
                           className={cn(
-                            "h-12 w-20 rounded-control text-center text-xl font-bold tabular-nums",
+                            "h-10 w-16 rounded-control text-center text-[15px] font-bold tabular-nums",
                             lowItem ? "bg-destructive/10 text-destructive" : "bg-muted text-foreground"
                           )}
                           aria-label="Saisir la quantité"
@@ -165,7 +172,7 @@ export function StockCounter({
                         type="button"
                         aria-label="Plus un"
                         onClick={() => setQuantity(item, item.quantity + 1)}
-                        className="flex h-12 w-12 items-center justify-center rounded-pill bg-muted text-foreground active:scale-95"
+                        className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-foreground active:scale-95"
                       >
                         <Plus className="h-5 w-5" />
                       </button>

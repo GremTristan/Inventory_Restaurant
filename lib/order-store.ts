@@ -1,11 +1,13 @@
 import "server-only";
 
 import { and, asc, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { canUse } from "@/lib/billing/plans";
 import { db } from "@/lib/db/client";
 import { orderItems, orders } from "@/lib/db/schema";
+import { todayPeriod } from "@/lib/dates";
 import { consumeStock } from "@/lib/inventory-store";
 import { getIngredientsForMenuItems, getMenuItems } from "@/lib/menu-store";
-import { todayPeriod } from "@/lib/dates";
+import { getTenantById } from "@/lib/tenant-store";
 import type { Order, OrderItem, OrderKind, OrderStatus, PaymentMethod, SiteId } from "@/types";
 
 type OrderRow = typeof orders.$inferSelect;
@@ -211,6 +213,8 @@ async function consumeForLines(
   orderId: string,
   lines: { menuItemId: string; quantity: number }[]
 ) {
+  const tenant = await getTenantById(ctx.tenantId);
+  if (!tenant || !canUse(tenant, "recipes")) return;
   const recipes = await getIngredientsForMenuItems(lines.map((l) => l.menuItemId));
   if (recipes.length === 0) return;
   const totals = new Map<string, number>();

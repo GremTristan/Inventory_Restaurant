@@ -51,7 +51,7 @@ export default async function TenantPage({ params }: { params: Promise<{ tenantI
         title={tenant.name}
         description={`Inscrit le ${new Date(tenant.createdAt).toLocaleDateString("fr-CH")} · ${tenant.slug}`}
         action={
-          <span className={`inline-flex rounded-pill px-3 py-1.5 text-sm font-semibold ${status.tone}`}>
+          <span className={`inline-flex rounded-md px-3 py-1.5 text-sm font-semibold ${status.tone}`}>
             {status.label}
             {days !== null ? ` · ${days} jour${days === 1 ? "" : "s"}` : ""}
           </span>
@@ -66,7 +66,7 @@ export default async function TenantPage({ params }: { params: Promise<{ tenantI
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <section className="rounded-card bg-card p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-4">
           <h2 className="text-base font-bold">Abonnement</h2>
           <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
             <dt className="text-muted-foreground">Facturation</dt>
@@ -120,13 +120,13 @@ export default async function TenantPage({ params }: { params: Promise<{ tenantI
             <span className="text-sm text-muted-foreground">Prolonger l’essai de</span>
             <Input name="days" type="number" min={1} max={90} defaultValue={14} className="min-h-11 w-20" />
             <span className="text-sm text-muted-foreground">jours</span>
-            <button type="submit" className="min-h-11 rounded-pill bg-muted px-4 text-sm font-semibold hover:bg-border/60">
+            <button type="submit" className="min-h-11 rounded-md bg-muted px-4 text-sm font-semibold hover:bg-border/60">
               Prolonger
             </button>
           </form>
         </section>
 
-        <section className="rounded-card bg-card p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-4">
           <h2 className="text-base font-bold">Établissements</h2>
           <ul className="mt-3 divide-y divide-border text-sm">
             {sites.map((s) => (
@@ -166,7 +166,7 @@ export default async function TenantPage({ params }: { params: Promise<{ tenantI
         </section>
       </div>
 
-      <section className="mt-6 rounded-card bg-card p-5 shadow-sm">
+      <section className="mt-6 rounded-lg border border-border bg-card p-4">
         <h2 className="text-base font-bold">Journal des actions</h2>
         <ul className="mt-3 divide-y divide-border text-sm">
           {log.map((e) => (
@@ -183,7 +183,7 @@ export default async function TenantPage({ params }: { params: Promise<{ tenantI
         </ul>
       </section>
 
-      <section className="mt-6 rounded-card border border-destructive/30 bg-card p-5">
+      <section className="mt-6 rounded-lg border border-destructive/30 bg-card p-5">
         <h2 className="text-base font-bold text-destructive">Supprimer définitivement ce client</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Efface toutes les données de l’enseigne (commandes, stock, comptes). À n’utiliser qu’après la demande écrite du client et le délai de 30 jours.

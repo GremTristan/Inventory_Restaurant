@@ -97,9 +97,9 @@ export function OrderComposer({
     <div className="flex flex-col gap-4 lg:h-[calc(100vh-7rem)] lg:flex-row">
       <OfflineBanner pending={pending} />
       {/* Product picker */}
-      <section className="flex min-w-0 flex-1 flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-xl font-bold text-foreground">
+      <section className="flex min-w-0 flex-1 flex-col gap-4">
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-[17px] font-bold tracking-tight text-foreground">
             {appendTo ? `Ajouter à la commande n° ${appendTo.number}` : "Nouvelle commande"}
           </h1>
         </div>
@@ -110,8 +110,8 @@ export function OrderComposer({
               type="button"
               onClick={() => setCategory(c)}
               className={cn(
-                "min-h-12 shrink-0 rounded-pill px-5 text-base font-semibold transition-colors",
-                category === c ? "bg-accent text-accent-foreground" : "bg-card text-foreground shadow-sm hover:bg-muted"
+                "min-h-9 shrink-0 rounded-md px-3.5 text-[13px] font-semibold transition-colors",
+                category === c ? "bg-foreground text-background" : "border border-border bg-card text-foreground hover:bg-muted"
               )}
             >
               {MENU_CATEGORY_LABELS[c]}
@@ -119,11 +119,11 @@ export function OrderComposer({
           ))}
         </div>
         {menu.length === 0 ? (
-          <p className="rounded-card bg-card p-8 text-center text-muted-foreground shadow-sm">
+          <p className="rounded-lg border border-border bg-card p-5 text-center text-[13px] text-muted-foreground">
             La carte est vide. La direction peut ajouter des produits depuis « Menu ».
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
             {visible.map((item) => {
               const qty = quantityByItem.get(item.id) ?? 0;
               return (
@@ -132,14 +132,14 @@ export function OrderComposer({
                   type="button"
                   onClick={() => add(item)}
                   className={cn(
-                    "relative flex min-h-24 flex-col items-start justify-between rounded-card border-2 bg-card p-3 text-left shadow-sm transition-transform active:scale-[0.96] select-none touch-manipulation",
+                    "relative flex min-h-16 flex-col items-start justify-between rounded-lg border border-border bg-card p-2.5 text-left lg:min-h-20 shadow-sm transition-transform active:scale-[0.96] select-none touch-manipulation",
                     qty > 0 ? "border-accent" : "border-transparent hover:border-border"
                   )}
                 >
                   <span className="text-base font-semibold leading-tight text-foreground">{item.name}</span>
                   <span className="text-sm font-medium text-muted-foreground">{formatMoney(item.price, currency)}</span>
                   {qty > 0 && (
-                    <span className="absolute right-2 top-2 flex h-8 min-w-8 items-center justify-center rounded-pill bg-accent px-2 text-base font-bold text-accent-foreground">
+                    <span className="absolute right-2 top-2 flex h-8 min-w-8 items-center justify-center rounded-md bg-accent px-2 text-base font-bold text-accent-foreground">
                       {qty}
                     </span>
                   )}
@@ -151,16 +151,16 @@ export function OrderComposer({
       </section>
 
       {/* Cart */}
-      <aside className="flex w-full flex-col rounded-card bg-card shadow-sm lg:w-96 lg:shrink-0">
+      <aside className="flex w-full flex-col rounded-lg border border-border bg-card lg:w-96 lg:shrink-0">
         {!appendTo && (
-          <div className="flex flex-col gap-3 border-b border-border p-4">
+          <div className="flex flex-col gap-4 border-b border-border p-4">
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setKind("table")}
                 className={cn(
-                  "flex min-h-14 items-center justify-center gap-2 rounded-control text-base font-semibold",
-                  kind === "table" ? "bg-accent text-accent-foreground" : "bg-muted text-foreground"
+                  "flex min-h-10 items-center justify-center gap-1.5 rounded-control text-[13px] font-semibold",
+                  kind === "table" ? "bg-foreground text-background" : "bg-muted text-foreground"
                 )}
               >
                 <Utensils className="h-5 w-5" /> Table
@@ -169,22 +169,22 @@ export function OrderComposer({
                 type="button"
                 onClick={() => setKind("takeaway")}
                 className={cn(
-                  "flex min-h-14 items-center justify-center gap-2 rounded-control text-base font-semibold",
-                  kind === "takeaway" ? "bg-accent text-accent-foreground" : "bg-muted text-foreground"
+                  "flex min-h-10 items-center justify-center gap-1.5 rounded-control text-[13px] font-semibold",
+                  kind === "takeaway" ? "bg-foreground text-background" : "bg-muted text-foreground"
                 )}
               >
                 <ShoppingBag className="h-5 w-5" /> À emporter
               </button>
             </div>
             {kind === "table" && (
-              <label className="flex items-center gap-3">
+              <label className="flex items-center gap-4">
                 <span className="text-sm font-medium text-foreground">Table n°</span>
                 <input
                   value={tableLabel}
                   onChange={(e) => setTableLabel(e.target.value.slice(0, 6))}
                   inputMode="numeric"
                   placeholder="12"
-                  className="min-h-14 w-full rounded-control bg-muted px-4 text-center text-2xl font-bold text-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  className="min-h-10 w-full rounded-control bg-muted px-3 text-center text-[17px] font-bold tracking-tight text-foreground focus:bg-card focus:outline-none focus:ring-2 focus:ring-accent/40"
                 />
               </label>
             )}
@@ -212,7 +212,7 @@ export function OrderComposer({
                     type="button"
                     onClick={() => changeQty(index, -1)}
                     aria-label="Retirer un"
-                    className="flex h-11 w-11 items-center justify-center rounded-pill bg-muted text-foreground active:scale-95"
+                    className="flex h-11 w-11 items-center justify-center rounded-md bg-muted text-foreground active:scale-95"
                   >
                     {line.quantity === 1 ? <Trash2 className="h-5 w-5" /> : <Minus className="h-5 w-5" />}
                   </button>
@@ -221,7 +221,7 @@ export function OrderComposer({
                     type="button"
                     onClick={() => changeQty(index, 1)}
                     aria-label="Ajouter un"
-                    className="flex h-11 w-11 items-center justify-center rounded-pill bg-muted text-foreground active:scale-95"
+                    className="flex h-11 w-11 items-center justify-center rounded-md bg-muted text-foreground active:scale-95"
                   >
                     <Plus className="h-5 w-5" />
                   </button>
@@ -237,7 +237,7 @@ export function OrderComposer({
                         setCart((c) => c.map((l, i) => (i === index ? { ...l, note: l.note === preset ? "" : preset } : l)));
                       }}
                       className={cn(
-                        "min-h-10 rounded-pill px-3 text-sm font-medium",
+                        "min-h-10 rounded-md px-3 text-sm font-medium",
                         line.note === preset ? "bg-warning text-warning-foreground" : "bg-muted text-foreground"
                       )}
                     >
@@ -260,13 +260,13 @@ export function OrderComposer({
             type="button"
             onClick={send}
             disabled={cart.length === 0 || sending}
-            className="flex min-h-[4.5rem] w-full items-center justify-between rounded-card bg-accent px-5 text-accent-foreground shadow-sm transition-transform active:scale-[0.98] disabled:opacity-40 select-none touch-manipulation"
+            className="flex h-11 w-full items-center justify-between rounded-md bg-foreground px-4 text-background hover:bg-foreground/90 disabled:opacity-40 select-none touch-manipulation"
           >
             <span className="flex items-center gap-2 text-lg font-bold">
               <Send className="h-6 w-6" /> {appendTo ? "Ajouter et envoyer" : "Envoyer en cuisine"}
             </span>
             <span className="text-right">
-              <span className="block text-xl font-bold tabular-nums">{formatMoney(total, currency)}</span>
+              <span className="block text-[17px] font-bold tracking-tight tabular-nums">{formatMoney(total, currency)}</span>
               <span className="block text-xs opacity-80">{count} article{count > 1 ? "s" : ""}</span>
             </span>
           </button>

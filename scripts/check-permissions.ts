@@ -5,7 +5,7 @@ import { config } from "dotenv";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq } from "drizzle-orm";
-import { sites, users } from "../lib/db/schema";
+import { sites, tenants, users } from "../lib/db/schema";
 import { SESSION_COOKIE, signToken, type SessionPayload } from "../lib/auth/token";
 
 config({ path: ".env.local", quiet: true });
@@ -13,6 +13,7 @@ config({ quiet: true });
 
 type Outcome = "ok" | "login" | "forbidden" | "own-site" | "not-found";
 
+const PROBE_SLUG = "permission-probe";
 const base = (process.argv[2] ?? "http://localhost:3000").replace(/\/$/, "");
 const url = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
 if (!url) throw new Error("DATABASE_URL is required");
@@ -34,6 +35,36 @@ async function outcomeOf(path: string, cookie?: string): Promise<{ outcome: Outc
   return { outcome: "forbidden", detail: String(res.status) };
 }
 
+async function ensureForeignSite() {
+  const existing = await db.select().from(tenants).where(eq(tenants.slug, PROBE_SLUG));
+  let tenantId = existing[0]?.id;
+  if (!tenantId) {
+    const [created] = await db
+      .insert(tenants)
+      .values({
+        name: "Permission Probe",
+        slug: PROBE_SLUG,
+        status: "suspended",
+        plan: "essentiel",
+      })
+      .returning({ id: tenants.id });
+    tenantId = created.id;
+  }
+  const existingSites = await db.select().from(sites).where(eq(sites.tenantId, tenantId));
+  if (existingSites[0]) return existingSites[0];
+  const [site] = await db
+    .insert(sites)
+    .values({
+      tenantId,
+      name: "Probe Site",
+      slug: "probe",
+      deviceCode: "PROBE1",
+      active: true,
+    })
+    .returning();
+  return site;
+}
+
 async function main() {
   const allUsers = await db.select().from(users).where(eq(users.active, true));
   const allSites = await db.select().from(sites);
@@ -53,8 +84,10 @@ async function main() {
     throw new Error("Need at least one active waiter, cook and director on the same tenant/site.");
   }
   const ownSite = allSites.find((s) => s.id === waiter.siteId)!;
-  const foreignSite = allSites.find((s) => s.tenantId !== director.tenantId);
   const otherSiteSameTenant = allSites.find((s) => s.tenantId === waiter.tenantId && s.id !== waiter.siteId);
+  // Always have a foreign tenant site so cross-tenant assertions run even on
+  // a freshly seeded single-tenant database.
+  const foreignSite = allSites.find((s) => s.tenantId !== director.tenantId) ?? (await ensureForeignSite());
 
   const exp = Math.floor(Date.now() / 1000) + 600;
   const session = async (u: typeof waiter) =>
@@ -87,14 +120,12 @@ async function main() {
     { path: `/api/stock/${S}`, expect: { waiter: "forbidden", cook: "ok", director: "ok" } },
     { path: "/api/export/ventes?periode=jour", expect: { anonymous: "login", waiter: "forbidden", cook: "forbidden", director: "ok" } },
     { path: "/api/export/donnees", expect: { waiter: "forbidden", director: "ok" } },
+    // Cross-tenant: proxy lets directors through on role, server must refuse on tenant.
+    { path: `/s/${foreignSite.id}/service`, expect: { director: ["forbidden", "not-found"], waiter: "own-site" } },
+    { path: `/api/orders/${foreignSite.id}`, expect: { director: ["forbidden", "not-found"] } },
   ];
   if (otherSiteSameTenant) {
     cases.push({ path: `/s/${otherSiteSameTenant.id}/service`, expect: { waiter: "own-site", director: "ok" } });
-  }
-  if (foreignSite) {
-    // Cross-tenant: proxy lets directors through on role, server must refuse on tenant.
-    cases.push({ path: `/s/${foreignSite.id}/service`, expect: { director: ["forbidden", "not-found"], waiter: "own-site" } });
-    cases.push({ path: `/api/orders/${foreignSite.id}`, expect: { director: ["forbidden", "not-found"] } });
   }
 
   let failures = 0;

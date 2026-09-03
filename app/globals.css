@@ -1,54 +1,47 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #14181b;
-  --muted: #f4f6f5;
-  --muted-foreground: #6b7674;
-  --border: #e3e8e6;
+  /* Stripe / Vercel / Cursor: near-white canvas, zinc ink, one restrained accent */
+  --background: #fafafa;
+  --foreground: #09090b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --border: #e4e4e7;
   --card: #ffffff;
-  --card-foreground: #14181b;
-  --accent: #1f6f5c;
+  --card-foreground: #09090b;
+  --accent: #0f766e;
   --accent-foreground: #ffffff;
-  --accent-hover: #185a4a;
-  --destructive: #e5484d;
+  --accent-hover: #0d9488;
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --success: #2f9e6f;
+  --success: #16a34a;
   --success-foreground: #ffffff;
-  --warning: #d68d1f;
+  --warning: #d97706;
   --warning-foreground: #ffffff;
-  --accent-secondary: #3b6ea5;
+  --accent-secondary: #2563eb;
   --chart-1: var(--accent);
   --chart-2: var(--accent-secondary);
   --chart-grid: var(--border);
-  --sidebar-background: #12211c;
-  --sidebar-foreground: #e7efe9;
-  --sidebar-muted-foreground: #9db3aa;
-  --sidebar-border: #1e332c;
-  --sidebar-accent: #2a4a3e;
+  --sidebar-background: #09090b;
+  --sidebar-foreground: #fafafa;
+  --sidebar-muted-foreground: #a1a1aa;
+  --sidebar-border: #27272a;
+  --sidebar-accent: #18181b;
 
-  /* Radius scale — Health-app rounded, single source of truth. Every
-     component should reference one of these instead of a hardcoded
-     rounded-md/rounded-xl/rounded-sm utility. */
-  --radius-control: 1rem;
-  --radius-pill: 9999px;
-  --radius-card: 1.5rem;
-  --radius-card-lg: 1.75rem;
-  --radius-sheet: 1.25rem;
+  /* Sharp SaaS radii — not Health bubbles, not zero */
+  --radius-control: 0.375rem;
+  --radius-pill: 0.375rem;
+  --radius-card: 0.5rem;
+  --radius-card-lg: 0.625rem;
+  --radius-sheet: 0.5rem;
 
-  /* Category palette — same hues as the old Tailwind literal classes in
-     types/index.ts's CATEGORY_COLORS, now tokenized so icon containers,
-     rings, and charts can all reference one name. */
-  --category-frais: #0ea5e9;
-  --category-sec: #f59e0b;
-  --category-sucre: #ec4899;
+  --category-frais: #0284c7;
+  --category-sec: #d97706;
+  --category-sucre: #db2777;
   --category-viande: #e11d48;
   --category-boissons: #0d9488;
-
-  /* Payment-method palette — distinguishes CB vs. espèces in sales entry,
-     previously both rendered in flat --accent green with no distinction. */
-  --metric-card-payment: #3b6ea5; /* = --accent-secondary, reused */
-  --metric-cash-payment: #8b5cf6; /* the one genuinely new hue */
+  --metric-card-payment: #2563eb;
+  --metric-cash-payment: #7c3aed;
   --chart-3: var(--metric-cash-payment);
 }
 
@@ -78,13 +71,11 @@
   --color-sidebar-muted-foreground: var(--sidebar-muted-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent: var(--sidebar-accent);
-
   --radius-control: var(--radius-control);
   --radius-pill: var(--radius-pill);
   --radius-card: var(--radius-card);
   --radius-card-lg: var(--radius-card-lg);
   --radius-sheet: var(--radius-sheet);
-
   --color-category-frais: var(--category-frais);
   --color-category-sec: var(--category-sec);
   --color-category-sucre: var(--category-sucre);
@@ -93,49 +84,56 @@
   --color-metric-card-payment: var(--metric-card-payment);
   --color-metric-cash-payment: var(--metric-cash-payment);
   --color-chart-3: var(--chart-3);
+  --font-sans: var(--font-sans-loaded), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-mono-loaded), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
 
-  /* System-font stack — Apple Health's numeral shapes/letterforms are SF
-     Pro; on Apple devices -apple-system resolves to real SF Pro at zero
-     network cost, elsewhere it falls back to the platform-native sans
-     (Segoe UI/Roboto), which also costs nothing to load on low-end
-     kitchen/counter tablets vs. a Geist font-file fetch. */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI",
-    Roboto, Helvetica, Arial, sans-serif;
+* {
+  border-color: var(--border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
 }
 
-/* White-label: a tenant sets --brand (see components/brand-style.tsx) and
-   every accent-colored control follows. */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
 [data-brand] {
   --accent: var(--brand);
-  --accent-hover: color-mix(in srgb, var(--brand) 85%, black);
+  --accent-hover: color-mix(in srgb, var(--brand) 82%, white);
   --accent-secondary: var(--brand);
 }
 
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(-8px) scale(0.96);
+    transform: translateY(-6px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
 @keyframes pulse-ring {
   0%,
   100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--destructive) 40%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--destructive) 35%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 8px transparent;
+    box-shadow: 0 0 0 6px transparent;
   }
 }
 

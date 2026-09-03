@@ -8,6 +8,7 @@ Commandes, écran cuisine, caisse, stock et pilotage multi-établissements. Mult
 cp .env.example .env.local        # puis remplir DATABASE_URL, SESSION_SECRET, Stripe
 npm install
 npm run db:migrate                # applique ./drizzle sur la base
+npm run seed:chain                # menus imprimés + stock Molard + comptes démo
 npm run superadmin -- "Vous" vous@editeur.ch "mot-de-passe-long"   # compte éditeur (/admin)
 npm run dev
 ```

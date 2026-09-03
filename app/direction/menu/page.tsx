@@ -6,6 +6,7 @@ import { EmptyState, PageHeader, SiteTabs } from "@/components/direction/ui";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { addMenuItemAction, deleteMenuItemAction, propagateMenuAction, updateMenuItemAction } from "@/lib/direction-actions";
+import { canUse } from "@/lib/billing/plans";
 import { getInventoryBySite } from "@/lib/inventory-store";
 import { getIngredientsForMenuItems, getMenuItems } from "@/lib/menu-store";
 import { pageDirector } from "@/lib/page-guards";
@@ -23,12 +24,13 @@ export default async function MenuPage({ searchParams }: { searchParams: Promise
 
   const [menu, inventory] = await Promise.all([getMenuItems(site.id), getInventoryBySite(site.id)]);
   const ingredients = await getIngredientsForMenuItems(menu.map((m) => m.id));
+  const recipesEnabled = canUse(tenant, "recipes");
 
   return (
     <>
       <PageHeader
         title="Menu"
-        description="Produits, prix et disponibilité. Un produit indisponible disparaît immédiatement des tablettes."
+        description="Produits, prix, disponibilité et recettes. « Copier cette carte » propage aussi les recettes vers les autres établissements (par nom d’article de stock)."
         action={
           sites.length > 1 ? (
             <ActionButton
@@ -44,21 +46,21 @@ export default async function MenuPage({ searchParams }: { searchParams: Promise
       />
       <SiteTabs sites={sites} current={site.id} basePath="/direction/menu" />
 
-      <section className="mb-6 rounded-card bg-card p-4 shadow-sm sm:p-5">
+      <section className="mb-8 rounded-lg border border-border bg-card p-4">
         <h2 className="mb-3 text-base font-bold text-foreground">Ajouter un produit</h2>
         <CreateForm action={addMenuItemAction} submitLabel="Ajouter" className="grid gap-3 sm:grid-cols-[1fr_8rem_10rem_auto] sm:items-end">
           <input type="hidden" name="siteId" value={site.id} />
           <label className="block text-sm font-medium">
             Nom
-            <Input name="name" required placeholder="Complète" className="mt-1 min-h-12" />
+            <Input name="name" required placeholder="Complète" className="mt-1 min-h-11" />
           </label>
           <label className="block text-sm font-medium">
             Prix ({tenant.currency})
-            <Input name="price" type="number" step="0.10" min="0" required placeholder="14.00" className="mt-1 min-h-12" />
+            <Input name="price" type="number" step="0.10" min="0" required placeholder="14.00" className="mt-1 min-h-11" />
           </label>
           <label className="block text-sm font-medium">
             Catégorie
-            <Select name="category" defaultValue="salee" className="mt-1 min-h-12 w-full">
+            <Select name="category" defaultValue="salee" className="mt-1 min-h-11 w-full">
               {MENU_CATEGORY_ORDER.map((c) => (
                 <option key={c} value={c}>
                   {MENU_CATEGORY_LABELS[c]}
@@ -80,7 +82,7 @@ export default async function MenuPage({ searchParams }: { searchParams: Promise
               <h2 className="mb-2 text-base font-bold text-muted-foreground">{MENU_CATEGORY_LABELS[category]}</h2>
               <ul className="space-y-2">
                 {items.map((item) => (
-                  <li key={item.id} className="rounded-card bg-card p-3 shadow-sm">
+                  <li key={item.id} className="rounded-lg border border-border bg-card p-3 shadow-sm">
                     <div className="flex flex-wrap items-center gap-2">
                       <AutoSaveForm action={updateMenuItemAction} className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                         <input type="hidden" name="id" value={item.id} />
@@ -120,6 +122,7 @@ export default async function MenuPage({ searchParams }: { searchParams: Promise
                       menuItem={item}
                       inventory={inventory}
                       lines={ingredients.filter((i) => i.menuItemId === item.id)}
+                      enabled={recipesEnabled}
                     />
                   </li>
                 ))}

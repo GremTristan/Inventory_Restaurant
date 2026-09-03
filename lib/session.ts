@@ -41,8 +41,9 @@ export const getSession = cache(async (): Promise<SessionContext | null> => {
 
   const user = await getUserById(payload.uid);
   if (!user || !user.active) return null;
-  // Token claims must still match the account (role/tenant changes revoke).
+  // Token claims must still match the account (role/tenant/site changes revoke).
   if (user.role !== payload.role || user.tenantId !== payload.tid) return null;
+  if ((user.role === "cook" || user.role === "waiter") && user.siteId !== payload.sid) return null;
 
   if (user.role === "superadmin") return { user, tenant: null };
   if (!user.tenantId) return null;

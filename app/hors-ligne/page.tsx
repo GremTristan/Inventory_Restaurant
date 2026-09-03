@@ -14,7 +14,7 @@ export default function HorsLignePage() {
       </p>
       <a
         href="/connexion"
-        className="mt-2 inline-flex min-h-12 items-center rounded-pill bg-accent px-6 text-base font-semibold text-accent-foreground"
+        className="mt-2 inline-flex min-h-12 items-center rounded-md bg-accent px-6 text-base font-semibold text-accent-foreground"
       >
         Réessayer
       </a>

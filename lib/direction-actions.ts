@@ -134,6 +134,7 @@ export async function propagateMenuAction(formData: FormData): Promise<void> {
 
 export async function setIngredientAction(formData: FormData): Promise<void> {
   const { tenant } = await requireDirector();
+  if (!canUse(tenant, "recipes")) throw new Error("Les recettes automatiques sont incluses dans la formule Pro.");
   const menuItemId = text(formData.get("menuItemId"));
   const inventoryItemId = text(formData.get("inventoryItemId"));
   const quantity = num(formData.get("quantity"));

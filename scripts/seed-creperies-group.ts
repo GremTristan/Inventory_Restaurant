@@ -2,7 +2,9 @@
 // Vieux-Carouge) et l’inventaire Molard de janvier 2026. Vevey et Hoshy
 // n’ont pas de PDF : ils reprennent la carte BDF. Le stock chiffré n’est
 // posé qu’à Molard ; les autres établissements reçoivent le même catalogue
-// à quantité 0 (à compter sur place). Idempotent. Usage : npm run seed:chain
+// à quantité 0 (à compter sur place). Crée aussi le directeur et 2 collaborateurs
+// par établissement (service + cuisine) s’ils manquent. Idempotent.
+// Usage : npm run seed:chain
 import { config } from "dotenv";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -31,20 +33,26 @@ const SITE_NAMES: Record<string, string> = {
   hoshy: "Hoshy",
 };
 
-const STAFF_PINS: Record<string, string> = {
-  "Alice Dubois": "5821",
-  "Léa Moreau": "6394",
-  "Marc Fontaine": "4718",
-  "Nabil Haddad": "8263",
-  "Sophie Berger": "3947",
-  "Chloé Rossier": "7519",
-  "Julien Rey": "2684",
-  "Hugo Currat": "9156",
-  "Camille Bovet": "4072",
-  "Inès Zbinden": "6831",
-  "Thomas Gay": "5290",
-  "Maxime Ducret": "1748",
-};
+const DIRECTOR_NAME = "Julien Perret";
+
+// Two people per site (service + cuisine) so a fresh migrate + seed:chain
+// is immediately usable on every tablet without a prior bootstrap script.
+const STAFF_ROSTER: { name: string; role: "waiter" | "cook"; siteSlug: string; pin: string }[] = [
+  { name: "Alice Dubois", role: "waiter", siteSlug: "bdf", pin: "5821" },
+  { name: "Léa Moreau", role: "cook", siteSlug: "bdf", pin: "6394" },
+  { name: "Marc Fontaine", role: "waiter", siteSlug: "carouge", pin: "4718" },
+  { name: "Nabil Haddad", role: "cook", siteSlug: "carouge", pin: "8263" },
+  { name: "Sophie Berger", role: "waiter", siteSlug: "molard", pin: "3947" },
+  { name: "Chloé Rossier", role: "cook", siteSlug: "molard", pin: "7519" },
+  { name: "Julien Rey", role: "waiter", siteSlug: "vevey", pin: "2684" },
+  { name: "Hugo Currat", role: "cook", siteSlug: "vevey", pin: "9156" },
+  { name: "Camille Bovet", role: "waiter", siteSlug: "philosophe", pin: "4072" },
+  { name: "Inès Zbinden", role: "cook", siteSlug: "philosophe", pin: "6831" },
+  { name: "Thomas Gay", role: "waiter", siteSlug: "hoshy", pin: "5290" },
+  { name: "Maxime Ducret", role: "cook", siteSlug: "hoshy", pin: "1748" },
+];
+
+const STAFF_PINS: Record<string, string> = Object.fromEntries(STAFF_ROSTER.map((s) => [s.name, s.pin]));
 
 const NO_AUTO_INGREDIENT = new Set([
   "1 boule",
@@ -90,8 +98,17 @@ const ALIASES: Record<string, string[]> = {
   "Compote de pommes": ["Pommes gala cube"],
   "Amandes grillées": ["Amandes effilées"],
   "Caramel au beurre salé": ["Caramel beurre salé"],
+  "Caramel au beurre salé artisanal": ["Caramel beurre salé"],
   "Noix de coco râpée": ["Noix de coco râpée"],
   "Chocolat artisanal": ["Chocolat"],
+  "Chocolat chaud": ["Caotina original"],
+  "Chocolat chaud artisanal": ["Caotina original"],
+  "Chocolat chaud ou froid": ["Caotina original"],
+  "Chocolat chaud ou froid artisanal": ["Caotina original"],
+  "Chocolat viennois": ["Caotina original"],
+  Confitures: ["Confiture de Myrtilles", "Confiture Fraise", "Confiture Framboise"],
+  "Zestes d'oranges": ["Oranges a jus"],
+  Frappé: ["IMP Glace Vanille", "IMP Glace Chocolat"],
   "Filet de poulet": ["Poulet Hallal", "Filet de Poulet Halal", "Filet de Poulet Français"],
   "Émincé de poulet": ["Poulet Hallal"],
   "Poulet mariné": ["Poulet Hallal"],
@@ -454,7 +471,8 @@ async function main() {
         } else {
           unit = stockByName.find((s) => s.id === inventoryItemId)?.unit ?? "unité";
         }
-        if (seen.has(inventoryItemId)) continue;
+        // Created above when missing; narrow for TypeScript.
+        if (!inventoryItemId || seen.has(inventoryItemId)) continue;
         seen.add(inventoryItemId);
         recipeValues.push({
           menuItemId: menuRow.id,
@@ -470,35 +488,73 @@ async function main() {
     }
   }
 
-  const staff = await db.select().from(users).where(eq(users.tenantId, tenant.id));
-  for (const person of staff) {
-    if (person.role === "director") {
-      await db
-        .update(users)
-        .set({
-          email: DIRECTOR_EMAIL,
-          passwordHash: await bcrypt.hash(DIRECTOR_PASSWORD, 10),
-          pinHash: null,
-          failedAttempts: 0,
-          lockedUntil: null,
-          active: true,
-        })
-        .where(eq(users.id, person.id));
-      continue;
-    }
-    const pin = STAFF_PINS[person.name];
-    if (!pin) continue;
+  const directorPasswordHash = await bcrypt.hash(DIRECTOR_PASSWORD, 10);
+  const [existingDirector] = await db
+    .select()
+    .from(users)
+    .where(and(eq(users.tenantId, tenant.id), eq(users.role, "director")));
+  if (existingDirector) {
     await db
       .update(users)
       .set({
-        pinHash: await bcrypt.hash(pin, 10),
+        name: DIRECTOR_NAME,
+        email: DIRECTOR_EMAIL,
+        passwordHash: directorPasswordHash,
+        pinHash: null,
+        siteId: null,
         failedAttempts: 0,
         lockedUntil: null,
         active: true,
       })
-      .where(eq(users.id, person.id));
+      .where(eq(users.id, existingDirector.id));
+  } else {
+    await db.insert(users).values({
+      tenantId: tenant.id,
+      name: DIRECTOR_NAME,
+      role: "director",
+      email: DIRECTOR_EMAIL,
+      passwordHash: directorPasswordHash,
+      siteId: null,
+      active: true,
+    });
   }
 
+  const sitesBySlug = new Map(chainSites.map((s) => [s.slug, s]));
+  for (const member of STAFF_ROSTER) {
+    const site = sitesBySlug.get(member.siteSlug);
+    if (!site) continue;
+    const pinHash = await bcrypt.hash(member.pin, 10);
+    const [existing] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.tenantId, tenant.id), eq(users.name, member.name)));
+    if (existing) {
+      await db
+        .update(users)
+        .set({
+          role: member.role,
+          siteId: site.id,
+          pinHash,
+          email: null,
+          passwordHash: null,
+          failedAttempts: 0,
+          lockedUntil: null,
+          active: true,
+        })
+        .where(eq(users.id, existing.id));
+    } else {
+      await db.insert(users).values({
+        tenantId: tenant.id,
+        name: member.name,
+        role: member.role,
+        siteId: site.id,
+        pinHash,
+        active: true,
+      });
+    }
+  }
+
+  const staff = await db.select().from(users).where(eq(users.tenantId, tenant.id));
   const refreshedSites = await db.select().from(sites).where(eq(sites.tenantId, tenant.id));
   console.log(`Chaîne ${tenant.name} alignée sur les cartes imprimées + inventaire Molard janv. 2026.`);
   console.log(`  ${catalog.length} articles de stock (quantités réelles à Molard seulement)`);

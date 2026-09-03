@@ -9,6 +9,8 @@ export interface PlanDefinition {
   maxSites: number | null;
   whiteLabel: boolean;
   exports: boolean;
+  recipes: boolean;
+  compareSites: boolean;
 }
 
 export const PLANS: PlanDefinition[] = [
@@ -21,6 +23,8 @@ export const PLANS: PlanDefinition[] = [
     maxSites: 1,
     whiteLabel: false,
     exports: false,
+    recipes: false,
+    compareSites: false,
   },
   {
     id: "pro",
@@ -38,6 +42,8 @@ export const PLANS: PlanDefinition[] = [
     maxSites: null,
     whiteLabel: true,
     exports: true,
+    recipes: true,
+    compareSites: true,
   },
 ];
 
@@ -46,7 +52,7 @@ export function planOf(tenant: Tenant): PlanDefinition {
 }
 
 // During the trial everything is open so the prospect sees the full product.
-export function canUse(tenant: Tenant, feature: "whiteLabel" | "exports"): boolean {
+export function canUse(tenant: Tenant, feature: "whiteLabel" | "exports" | "recipes" | "compareSites"): boolean {
   if (tenant.status === "trial") return true;
   return planOf(tenant)[feature];
 }

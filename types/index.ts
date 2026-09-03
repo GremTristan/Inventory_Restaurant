@@ -234,34 +234,6 @@ export interface DailySalesEntry {
   recordedAt: string; // ISO timestamp
 }
 
-export interface ExtractedSalesData {
-  cardRevenue: number | null;
-  netRevenue: number | null;
-  items: { menuItemId: string; quantity: number }[];
-  unmatchedCount: number;
-}
-
-export interface ReceiptRecord {
-  id: string;
-  tenantId: string;
-  siteId: SiteId;
-  submittedByUserId: string;
-  submittedAt: string; // ISO timestamp
-  imagePath: string;
-  imageMediaType: "image/jpeg" | "image/png" | "image/webp" | "image/gif";
-  aiSummary: string;
-}
-
-export interface AvatarChatMessage {
-  role: "user" | "assistant";
-  text: string;
-}
-
-export interface AvatarClientAction {
-  type: "fill-sales-form";
-  data: ExtractedSalesData;
-}
-
 export type ReminderKind = "daily-sales" | "monthly-inventory";
 
 export interface ReminderCompletion {

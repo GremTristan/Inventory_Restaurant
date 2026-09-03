@@ -16,14 +16,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <ShieldCheck className="h-5 w-5 text-accent" /> Console éditeur
           </Link>
           <nav className="flex items-center gap-1 text-sm">
-            <Link href="/admin" className="rounded-pill px-3 py-2 hover:bg-sidebar-accent">
+            <Link href="/admin" className="rounded-md px-3 py-2 hover:bg-sidebar-accent">
               Clients
             </Link>
-            <Link href="/admin/compte" className="rounded-pill px-3 py-2 hover:bg-sidebar-accent">
+            <Link href="/admin/compte" className="rounded-md px-3 py-2 hover:bg-sidebar-accent">
               Mon compte
             </Link>
             <form action={logoutAction}>
-              <button type="submit" className="flex items-center gap-2 rounded-pill px-3 py-2 text-sidebar-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground">
+              <button type="submit" className="flex items-center gap-2 rounded-md px-3 py-2 text-sidebar-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground">
                 <LogOut className="h-4 w-4" /> {user.name}
               </button>
             </form>

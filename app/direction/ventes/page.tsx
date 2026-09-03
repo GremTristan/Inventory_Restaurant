@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Download } from "lucide-react";
 import { EmptyState, PageHeader, SiteTabs, Stat } from "@/components/direction/ui";
+import { canUse } from "@/lib/billing/plans";
 import { addDays, formatDayLabel, startOfMonth, startOfWeek, todayPeriod } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { pageDirector } from "@/lib/page-guards";
@@ -34,6 +35,8 @@ export default async function VentesPage({ searchParams }: { searchParams: Promi
   const period: Period = (["jour", "semaine", "mois", "30j"] as Period[]).includes(params.periode as Period) ? (params.periode as Period) : "semaine";
   const siteId = sites.some((s) => s.id === params.site) ? params.site! : null;
   const { from, to, label } = range(period);
+  const exportsEnabled = canUse(tenant, "exports");
+  const compareEnabled = canUse(tenant, "compareSites");
 
   const report = await salesReport(tenant.id, siteId ? sites.filter((s) => s.id === siteId) : sites, from, to);
   const scoped = siteId
@@ -53,12 +56,22 @@ export default async function VentesPage({ searchParams }: { searchParams: Promi
         title="Ventes"
         description="Chiffre d’affaires encaissé, produits les plus vendus, comparaison entre établissements."
         action={
-          <Link
-            href={`/api/export/ventes${query({})}`}
-            className="inline-flex min-h-11 items-center gap-2 rounded-pill bg-muted px-4 text-sm font-semibold text-foreground hover:bg-border/60"
-          >
-            <Download className="h-4 w-4" /> Export tableur (CSV)
-          </Link>
+          exportsEnabled ? (
+            <Link
+              href={`/api/export/ventes${query({})}`}
+              className="inline-flex min-h-11 items-center gap-2 rounded-md bg-muted px-4 text-sm font-semibold text-foreground hover:bg-border/60"
+            >
+              <Download className="h-4 w-4" /> Export tableur (CSV)
+            </Link>
+          ) : (
+            <Link
+              href="/direction/abonnement"
+              className="inline-flex min-h-11 items-center gap-2 rounded-md bg-muted px-4 text-sm font-semibold text-muted-foreground hover:bg-border/60"
+              title="Inclus dans la formule Pro"
+            >
+              <Download className="h-4 w-4" /> Export Pro
+            </Link>
+          )
         }
       />
 
@@ -68,7 +81,7 @@ export default async function VentesPage({ searchParams }: { searchParams: Promi
             key={p}
             href={query({ periode: p })}
             className={cn(
-              "min-h-11 inline-flex shrink-0 items-center rounded-pill px-4 text-sm font-semibold",
+              "min-h-11 inline-flex shrink-0 items-center rounded-md px-4 text-sm font-semibold",
               period === p ? "bg-foreground text-background" : "bg-card text-foreground shadow-sm hover:bg-muted"
             )}
           >
@@ -96,7 +109,7 @@ export default async function VentesPage({ searchParams }: { searchParams: Promi
       ) : (
         <>
           {report.series.length > 1 && (
-            <section className="mt-6 rounded-card bg-card p-5 shadow-sm">
+            <section className="mt-6 rounded-lg border border-border bg-card p-4">
               <h2 className="mb-4 text-base font-bold text-foreground">Chiffre d’affaires par jour</h2>
               <div className="flex h-40 items-end gap-1">
                 {report.series.map((point) => (
@@ -117,8 +130,8 @@ export default async function VentesPage({ searchParams }: { searchParams: Promi
           )}
 
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            {!siteId && sites.length > 1 && (
-              <section className="rounded-card bg-card p-5 shadow-sm">
+            {!siteId && sites.length > 1 && compareEnabled && (
+              <section className="rounded-lg border border-border bg-card p-4">
                 <h2 className="mb-3 text-base font-bold text-foreground">Comparaison des établissements</h2>
                 <ul className="space-y-3">
                   {report.bySite.map((s) => (
@@ -130,15 +143,15 @@ export default async function VentesPage({ searchParams }: { searchParams: Promi
                           <span className="text-muted-foreground">· {s.count} tickets · moy. {formatMoney(s.averageTicket, tenant.currency)}</span>
                         </span>
                       </div>
-                      <div className="mt-1 h-2.5 overflow-hidden rounded-pill bg-muted">
-                        <div className="h-full rounded-pill bg-accent" style={{ width: `${report.total ? (s.total / report.total) * 100 : 0}%` }} />
+                      <div className="mt-1 h-2.5 overflow-hidden rounded-md bg-muted">
+                        <div className="h-full rounded-md bg-accent" style={{ width: `${report.total ? (s.total / report.total) * 100 : 0}%` }} />
                       </div>
                     </li>
                   ))}
                 </ul>
               </section>
             )}
-            <section className="rounded-card bg-card p-5 shadow-sm">
+            <section className="rounded-lg border border-border bg-card p-4">
               <h2 className="mb-3 text-base font-bold text-foreground">Produits les plus vendus</h2>
               <ol className="divide-y divide-border">
                 {report.topProducts.map((p, i) => (

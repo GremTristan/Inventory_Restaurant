@@ -70,14 +70,14 @@ export function Till({
   const totals = summarizePaid(paidToday);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <OfflineBanner pending={pending} />
-      <div className="flex flex-col gap-4 lg:flex-row">
+      <div className="flex flex-col gap-5 lg:flex-row">
         {/* Orders to collect */}
         <section className="flex w-full flex-col gap-2 lg:w-80 lg:shrink-0">
-          <h1 className="text-xl font-bold text-foreground">À encaisser ({payable.length})</h1>
+          <h1 className="text-[17px] font-bold tracking-tight text-foreground">À encaisser ({payable.length})</h1>
           {payable.length === 0 && (
-            <p className="rounded-card bg-card p-6 text-center text-sm text-muted-foreground shadow-sm">
+            <p className="rounded-lg border border-border bg-card p-6 text-center text-sm text-muted-foreground shadow-sm">
               Toutes les commandes sont encaissées.
             </p>
           )}
@@ -90,12 +90,12 @@ export function Till({
                 setJustPaid(null);
               }}
               className={cn(
-                "flex min-h-16 items-center justify-between rounded-card border-2 bg-card px-4 py-3 text-left shadow-sm",
+                "flex min-h-12 items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5 text-left shadow-sm",
                 effectiveId === order.id ? "border-accent" : "border-transparent"
               )}
             >
               <span className="flex items-center gap-2">
-                <span className="text-xl font-bold tabular-nums">n° {order.number}</span>
+                <span className="text-[17px] font-bold tracking-tight tabular-nums">n° {order.number}</span>
                 <span className="flex items-center gap-1 text-sm text-muted-foreground">
                   {order.kind === "takeaway" ? <ShoppingBag className="h-4 w-4" /> : <Utensils className="h-4 w-4" />}
                   {order.kind === "takeaway" ? "Emporter" : order.tableLabel ? `T. ${order.tableLabel}` : "Table"}
@@ -109,16 +109,16 @@ export function Till({
         {/* Payment panel */}
         <section className="flex-1">
           {justPaid && !selected ? (
-            <div className="flex flex-col items-center gap-4 rounded-card bg-card p-8 text-center shadow-sm">
-              <CheckCircle2 className="h-16 w-16 text-success" />
-              <p className="text-2xl font-bold text-foreground">Commande n° {justPaid.number} encaissée</p>
+            <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-card p-5 text-center shadow-sm">
+              <CheckCircle2 className="h-10 w-10 text-success" />
+              <p className="text-[17px] font-bold tracking-tight text-foreground">Commande n° {justPaid.number} encaissée</p>
               <p className="text-lg text-muted-foreground">
                 {formatMoney(justPaid.total, currency)} · {justPaid.paymentMethod ? PAYMENT_METHOD_LABELS[justPaid.paymentMethod] : ""}
               </p>
               <div className="flex flex-wrap justify-center gap-3">
                 <Link
                   href={`/s/${siteId}/caisse/ticket/${justPaid.id}`}
-                  className="flex min-h-14 items-center gap-2 rounded-pill bg-muted px-6 text-base font-semibold text-foreground"
+                  className="flex min-h-10 items-center gap-1.5 rounded-md bg-muted px-4 text-[13px] font-semibold text-foreground"
                 >
                   <Receipt className="h-5 w-5" /> Ticket
                 </Link>
@@ -129,7 +129,7 @@ export function Till({
                       setJustPaid(null);
                       setSelectedId(payable[0].id);
                     }}
-                    className="flex min-h-14 items-center rounded-pill bg-accent px-6 text-base font-semibold text-accent-foreground"
+                    className="flex min-h-10 items-center rounded-md bg-accent px-4 text-[13px] font-semibold text-accent-foreground"
                   >
                     Commande suivante
                   </button>
@@ -137,9 +137,9 @@ export function Till({
               </div>
             </div>
           ) : selected ? (
-            <div className="rounded-card bg-card p-5 shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-4">
               <header className="flex items-center justify-between">
-                <span className="text-2xl font-bold">Commande n° {selected.number}</span>
+                <span className="text-[17px] font-bold tracking-tight">Commande n° {selected.number}</span>
                 <span className="text-sm text-muted-foreground">
                   {selected.kind === "takeaway" ? "À emporter" : selected.tableLabel ? `Table ${selected.tableLabel}` : "Table"}
                 </span>
@@ -154,7 +154,7 @@ export function Till({
                   </li>
                 ))}
               </ul>
-              <p className="flex items-center justify-between text-3xl font-bold">
+              <p className="flex items-center justify-between text-[22px] font-bold tracking-tight">
                 <span>Total</span>
                 <span className="tabular-nums">{formatMoney(selected.total, currency)}</span>
               </p>
@@ -166,28 +166,28 @@ export function Till({
                     type="button"
                     onClick={() => pay(selected, method)}
                     className={cn(
-                      "flex min-h-24 flex-col items-center justify-center gap-2 rounded-card text-lg font-bold text-white shadow-sm transition-transform active:scale-[0.96] select-none touch-manipulation",
+                      "flex min-h-14 flex-col items-center justify-center gap-1.5 rounded-lg text-[13px] font-bold tracking-tight lg:min-h-20 lg:text-[15px] text-white shadow-sm transition-transform active:scale-[0.96] select-none touch-manipulation",
                       tone
                     )}
                   >
-                    <Icon className="h-8 w-8" />
+                    <Icon className="h-5 w-5 lg:h-6 lg:w-6" />
                     {PAYMENT_METHOD_LABELS[method]}
                   </button>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="rounded-card bg-card p-8 text-center text-muted-foreground shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-5 text-center text-[13px] text-muted-foreground">
               Sélectionnez une commande à gauche.
             </div>
           )}
 
           {/* Day summary */}
-          <div className="mt-4 rounded-card bg-card p-5 shadow-sm">
+          <div className="mt-4 rounded-lg border border-border bg-card p-4">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Aujourd’hui</p>
-                <p className="text-3xl font-bold tabular-nums">{formatMoney(totals.total, currency)}</p>
+                <p className="text-[22px] font-bold tracking-tight tabular-nums">{formatMoney(totals.total, currency)}</p>
                 <p className="text-sm text-muted-foreground">
                   {totals.count} ticket{totals.count > 1 ? "s" : ""} · Carte {formatMoney(totals.byMethod.card, currency)} · Espèces{" "}
                   {formatMoney(totals.byMethod.cash, currency)} · TWINT {formatMoney(totals.byMethod.twint, currency)}

@@ -14,33 +14,33 @@ export default async function DirectionLayout({ children }: { children: React.Re
   return (
     <BrandScope tenant={tenant}>
       <div className="flex min-h-screen flex-col bg-background md:flex-row">
-        <aside className="hidden md:flex md:w-64 md:shrink-0 md:flex-col md:bg-sidebar-background md:px-4 md:py-6">
-          <div className="px-2 text-sidebar-foreground [&_span]:text-sidebar-foreground">
+        <aside className="hidden md:flex md:w-56 md:shrink-0 md:flex-col md:border-r md:border-border md:bg-card md:px-3 md:py-4">
+          <div className="px-2 pb-4">
             <BrandMark tenant={tenant} href="/direction" />
           </div>
-          <div className="mt-8 flex-1">
+          <div className="flex-1">
             <DirectionSidebarNav />
           </div>
-          <div className="mt-6 border-t border-sidebar-border pt-4">
-            <p className="truncate px-2 text-sm font-semibold text-sidebar-foreground">{user.name}</p>
-            <p className="truncate px-2 text-xs text-sidebar-muted-foreground">{user.email}</p>
+          <div className="mt-4 border-t border-border pt-3">
+            <p className="truncate px-2 text-[12px] font-medium text-foreground">{user.name}</p>
+            <p className="truncate px-2 font-mono text-[11px] text-muted-foreground">{user.email}</p>
             <form action={logoutAction} className="mt-2">
               <button
                 type="submit"
-                className="flex min-h-10 w-full items-center gap-2 rounded-pill px-2 text-sm text-sidebar-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-[12px] text-muted-foreground hover:bg-muted hover:text-foreground"
               >
-                <LogOut className="h-4 w-4" /> Déconnexion
+                <LogOut className="h-3.5 w-3.5" /> Logout
               </button>
             </form>
           </div>
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center justify-between border-b border-border bg-card px-4 py-2 md:hidden">
+          <header className="flex h-12 items-center justify-between border-b border-border bg-card px-4 md:hidden">
             <BrandMark tenant={tenant} href="/direction" />
             <form action={logoutAction}>
-              <button type="submit" className="flex h-11 w-11 items-center justify-center rounded-pill text-muted-foreground" aria-label="Déconnexion">
-                <LogOut className="h-5 w-5" />
+              <button type="submit" className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted" aria-label="Déconnexion">
+                <LogOut className="h-4 w-4" />
               </button>
             </form>
           </header>
@@ -49,29 +49,29 @@ export default async function DirectionLayout({ children }: { children: React.Re
             <div
               className={
                 usable
-                  ? "flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-accent/10 px-4 py-2 text-center text-sm text-foreground"
-                  : "flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-destructive px-4 py-2 text-center text-sm font-semibold text-destructive-foreground"
+                  ? "flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-border bg-muted/60 px-4 py-2 text-center text-[12px] text-foreground"
+                  : "flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-center text-[12px] font-medium text-destructive"
               }
             >
               {usable ? (
                 <>
-                  Essai gratuit : <strong>{daysLeft} jour{daysLeft === 1 ? "" : "s"}</strong> restant{daysLeft === 1 ? "" : "s"}.
-                  <Link href="/direction/abonnement" className="font-semibold text-accent underline">
-                    Choisir mon abonnement
+                  Trial · <strong className="font-mono">{daysLeft}d</strong> remaining
+                  <Link href="/direction/abonnement" className="font-medium text-accent underline-offset-2 hover:underline">
+                    Choose plan
                   </Link>
                 </>
               ) : (
                 <>
-                  Votre abonnement est inactif : les tablettes sont bloquées.
-                  <Link href="/direction/abonnement" className="underline">
-                    Réactiver
+                  Subscription inactive — tablets locked.
+                  <Link href="/direction/abonnement" className="underline underline-offset-2">
+                    Reactivate
                   </Link>
                 </>
               )}
             </div>
           )}
 
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-24 sm:px-6 md:pb-8">{children}</main>
+          <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-5 pb-20 sm:px-6 md:pb-8">{children}</main>
         </div>
         <DirectionMobileNav />
       </div>

@@ -1,7 +1,20 @@
 import type { Metadata, Viewport } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/toast";
 import { ServiceWorkerRegistration } from "@/components/pwa-register";
+
+const sans = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans-loaded",
+  display: "swap",
+});
+
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono-loaded",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: { default: "Crêpo — le portail de votre crêperie", template: "%s · Crêpo" },
@@ -12,7 +25,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1f6f5c",
+  themeColor: "#0f766e",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -21,8 +34,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" className="h-full antialiased">
-      <body className="flex min-h-full flex-col">
+    <html lang="fr" className={`${sans.variable} ${mono.variable} h-full antialiased`}>
+      <body className="flex min-h-full flex-col font-sans">
         <ToastProvider>{children}</ToastProvider>
         <ServiceWorkerRegistration />
       </body>
