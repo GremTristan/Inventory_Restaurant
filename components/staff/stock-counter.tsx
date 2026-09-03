@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, ClipboardCheck, Minus, Plus, Search } from "lucide-react";
 import { OfflineBanner, useOnline, useToast } from "@/components/ui/toast";
 import { useOfflineQueue } from "@/lib/offline-queue";
-import { CATEGORY_LABELS, CATEGORY_ORDER, type StaffInventoryItem } from "@/types";
+import { CATEGORY_LABELS, CATEGORY_ORDER, ZONE_LABELS, type StaffInventoryItem, type Zone } from "@/types";
+import { groupStockByFamily } from "@/lib/inventory-taxonomy";
 import { cn } from "@/lib/utils";
 
 function isLow(item: StaffInventoryItem) {
@@ -26,6 +27,7 @@ export function StockCounter({
 }) {
   const [items, setItems] = useState(initialItems);
   const [query, setQuery] = useState("");
+  const [zone, setZone] = useState<Zone | "all">("all");
   const [editing, setEditing] = useState<string | null>(null);
   const [due, setDue] = useState(inventoryDue);
   const toast = useToast();
@@ -35,8 +37,12 @@ export function StockCounter({
   const low = useMemo(() => items.filter(isLow), [items]);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q ? items.filter((i) => i.name.toLowerCase().includes(q)) : items;
-  }, [items, query]);
+    return items.filter((i) => {
+      if (zone !== "all" && i.zone !== zone) return false;
+      if (q && !i.name.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [items, query, zone]);
 
   const setQuantity = async (item: StaffInventoryItem, quantity: number) => {
     const clean = Math.max(0, Math.round(quantity * 10) / 10);
@@ -100,6 +106,21 @@ export function StockCounter({
           </span>
         )}
       </div>
+      <div className="flex gap-2 overflow-x-auto">
+        {(["all", "cuisine", "salle"] as const).map((z) => (
+          <button
+            key={z}
+            type="button"
+            onClick={() => setZone(z)}
+            className={cn(
+              "min-h-10 shrink-0 rounded-md px-3 text-[13px] font-semibold",
+              zone === z ? "bg-foreground text-background" : "border border-border bg-card"
+            )}
+          >
+            {z === "all" ? "Tous les rayons" : ZONE_LABELS[z]}
+          </button>
+        ))}
+      </div>
 
       {items.length === 0 && (
         <p className="rounded-lg border border-border bg-card p-5 text-center text-[13px] text-muted-foreground">
@@ -108,79 +129,86 @@ export function StockCounter({
       )}
 
       {CATEGORY_ORDER.map((category) => {
-        const group = filtered.filter((i) => i.category === category);
-        if (group.length === 0) return null;
+        const families = groupStockByFamily(filtered.filter((i) => i.category === category));
+        if (families.length === 0) return null;
         return (
           <section key={category}>
             <h2 className="mb-2 text-base font-bold text-muted-foreground">{CATEGORY_LABELS[category]}</h2>
-            <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              {group.map((item) => {
-                const lowItem = isLow(item);
-                return (
-                  <li
-                    key={item.id}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg border bg-card p-3 shadow-sm",
-                      lowItem ? "border-destructive/50" : "border-transparent"
-                    )}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.unit}
-                        {item.lowStockThreshold !== null && ` · alerte sous ${formatQty(item.lowStockThreshold)}`}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        aria-label="Moins un"
-                        onClick={() => setQuantity(item, item.quantity - 1)}
-                        className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-foreground active:scale-95"
+            {families.map((family) => (
+              <div key={family.family} className="mb-3">
+                <h3 className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">
+                  {family.label}
+                </h3>
+                <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  {family.items.map((item) => {
+                    const lowItem = isLow(item);
+                    return (
+                      <li
+                        key={item.id}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg border bg-card p-3 shadow-sm",
+                          lowItem ? "border-destructive/50" : "border-transparent"
+                        )}
                       >
-                        <Minus className="h-5 w-5" />
-                      </button>
-                      {editing === item.id ? (
-                        <input
-                          autoFocus
-                          inputMode="decimal"
-                          defaultValue={formatQty(item.quantity)}
-                          onBlur={(e) => {
-                            setEditing(null);
-                            const value = Number(e.target.value.replace(",", "."));
-                            if (Number.isFinite(value) && value !== item.quantity) void setQuantity(item, value);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                          }}
-                          className="h-10 w-16 rounded-control bg-muted text-center text-[15px] font-bold focus:outline-none focus:ring-2 focus:ring-accent/40"
-                        />
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setEditing(item.id)}
-                          className={cn(
-                            "h-10 w-16 rounded-control text-center text-[15px] font-bold tabular-nums",
-                            lowItem ? "bg-destructive/10 text-destructive" : "bg-muted text-foreground"
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[15px] font-semibold tracking-tight text-foreground">{item.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {ZONE_LABELS[item.zone]} · {item.unit}
+                            {item.lowStockThreshold !== null && ` · alerte sous ${formatQty(item.lowStockThreshold)}`}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            aria-label="Moins un"
+                            onClick={() => setQuantity(item, item.quantity - 1)}
+                            className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-foreground active:scale-95"
+                          >
+                            <Minus className="h-5 w-5" />
+                          </button>
+                          {editing === item.id ? (
+                            <input
+                              autoFocus
+                              inputMode="decimal"
+                              defaultValue={formatQty(item.quantity)}
+                              onBlur={(e) => {
+                                setEditing(null);
+                                const value = Number(e.target.value.replace(",", "."));
+                                if (Number.isFinite(value) && value !== item.quantity) void setQuantity(item, value);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                              }}
+                              className="h-10 w-16 rounded-control bg-muted text-center text-[15px] font-bold focus:outline-none focus:ring-2 focus:ring-accent/40"
+                            />
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setEditing(item.id)}
+                              className={cn(
+                                "h-10 w-16 rounded-control text-center text-[15px] font-bold tabular-nums",
+                                lowItem ? "bg-destructive/10 text-destructive" : "bg-muted text-foreground"
+                              )}
+                              aria-label="Saisir la quantité"
+                            >
+                              {formatQty(item.quantity)}
+                            </button>
                           )}
-                          aria-label="Saisir la quantité"
-                        >
-                          {formatQty(item.quantity)}
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        aria-label="Plus un"
-                        onClick={() => setQuantity(item, item.quantity + 1)}
-                        className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-foreground active:scale-95"
-                      >
-                        <Plus className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                          <button
+                            type="button"
+                            aria-label="Plus un"
+                            onClick={() => setQuantity(item, item.quantity + 1)}
+                            className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-foreground active:scale-95"
+                          >
+                            <Plus className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
           </section>
         );
       })}

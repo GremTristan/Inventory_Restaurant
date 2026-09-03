@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
-import { ChefHat, HandPlatter, KeyRound, Trash2, UserCheck, UserX } from "lucide-react";
-import { ActionButton, AutoSaveForm, CreateForm, DeleteButton } from "@/components/direction/forms";
+import { ActionButton, CreateForm } from "@/components/direction/forms";
+import { TeamDirectory } from "@/components/direction/team-directory";
 import { EmptyState, PageHeader, SiteTabs } from "@/components/direction/ui";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { addStaffAction, deleteStaffAction, inviteDirectorAction, resetPinAction, updateStaffAction } from "@/lib/direction-actions";
+import { addStaffAction, inviteDirectorAction, updateStaffAction } from "@/lib/direction-actions";
 import { pageDirector } from "@/lib/page-guards";
 import { getSitesForTenant } from "@/lib/site-store";
 import { getUsersForTenant } from "@/lib/user-store";
 import { ROLE_LABELS, STAFF_ROLES } from "@/types";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Équipe" };
 
@@ -19,12 +18,12 @@ export default async function EquipePage({ searchParams }: { searchParams: Promi
   const sites = (await getSitesForTenant(tenant.id)).filter((s) => s.active);
   const site = sites.find((s) => s.id === siteParam) ?? sites[0];
   const users = await getUsersForTenant(tenant.id);
-  const staff = users.filter((u) => u.role !== "director" && u.siteId === site?.id);
+  const staff = users.filter((u) => u.role !== "director");
   const directors = users.filter((u) => u.role === "director");
 
   return (
     <>
-      <PageHeader title="Équipe" description="Serveurs et cuisiniers se connectent sur la tablette avec un code à 4 chiffres. Trente secondes pour ajouter quelqu’un." />
+      <PageHeader title="Équipe" description="Organisation par établissement, puis service ou cuisine. La recherche porte sur toute la chaîne." />
       {sites.length > 1 && <SiteTabs sites={sites} current={site?.id ?? null} basePath="/direction/equipe" />}
 
       {site && (
@@ -57,53 +56,7 @@ export default async function EquipePage({ searchParams }: { searchParams: Promi
       {staff.length === 0 ? (
         <EmptyState title="Personne dans l’équipe pour l’instant" description="Ajoutez un serveur et un cuisinier : ils pourront se connecter immédiatement sur la tablette." />
       ) : (
-        <ul className="grid gap-3 md:grid-cols-2">
-          {staff.map((member) => {
-            const Icon = member.role === "cook" ? ChefHat : HandPlatter;
-            return (
-              <li key={member.id} className={cn("rounded-lg border border-border bg-card p-4", !member.active && "opacity-60")}>
-                <div className="flex items-start gap-3">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <AutoSaveForm action={updateStaffAction} className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                    <input type="hidden" name="id" value={member.id} />
-                    <Input name="name" defaultValue={member.name} aria-label="Nom" className="min-h-11 min-w-32 flex-1 font-semibold" />
-                    <span className="rounded-md bg-muted px-3 py-1.5 text-xs font-semibold">{ROLE_LABELS[member.role]}</span>
-                    {sites.length > 1 && (
-                      <Select name="siteId" defaultValue={member.siteId ?? ""} aria-label="Établissement" className="min-h-11">
-                        {sites.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.name}
-                          </option>
-                        ))}
-                      </Select>
-                    )}
-                  </AutoSaveForm>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <CreateForm action={resetPinAction} submitLabel="Changer le code" className="flex items-center gap-2">
-                    <input type="hidden" name="id" value={member.id} />
-                    <KeyRound className="h-4 w-4 text-muted-foreground" />
-                    <Input name="pin" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} required placeholder="Nouveau code" autoComplete="off" className="min-h-11 w-36 text-center tracking-[0.3em]" />
-                  </CreateForm>
-                  <ActionButton
-                    action={updateStaffAction}
-                    fields={{ id: member.id, active: member.active ? "false" : "true" }}
-                    message={member.active ? `${member.name} ne peut plus se connecter` : `${member.name} réactivé`}
-                    variant="secondary"
-                  >
-                    {member.active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                    {member.active ? "Désactiver" : "Réactiver"}
-                  </ActionButton>
-                  <DeleteButton action={deleteStaffAction} fields={{ id: member.id }} message={`${member.name} supprimé`} variant="ghost" size="icon" aria-label="Supprimer" confirmLabel="Supprimer ?">
-                    <Trash2 className="h-5 w-5 text-destructive" />
-                  </DeleteButton>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        <TeamDirectory staff={staff} sites={sites} />
       )}
 
       <section className="mt-10">

@@ -1,0 +1,12 @@
+import { config } from "dotenv";
+config({ path: ".env.local", quiet: true });
+import { neon } from "@neondatabase/serverless";
+import bcrypt from "bcryptjs";
+const sql = neon(process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL!);
+const [t] = await sql`insert into tenants (name, slug, status, plan, trial_ends_at, billing_email) values ('Test Chaîne B', 'test-chaine-b', 'trial', 'essentiel', now() + interval '14 days', 'dir-b@test.local') returning id`;
+const [s] = await sql`insert into sites (tenant_id, name, slug, device_code, active) values (${t.id}, 'Site B1', 'site-b1', 'TESTB1', true) returning id`;
+const pw = await bcrypt.hash("Directeur-B-2026!", 12);
+const pin = await bcrypt.hash("1234", 10);
+await sql`insert into users (tenant_id, name, role, email, password_hash, active) values (${t.id}, 'Directeur B', 'director', 'dir-b@test.local', ${pw}, true)`;
+await sql`insert into users (tenant_id, site_id, name, role, pin_hash, active) values (${t.id}, ${s.id}, 'Serveur B', 'waiter', ${pin}, true)`;
+console.log("tenant B", t.id, "site", s.id);

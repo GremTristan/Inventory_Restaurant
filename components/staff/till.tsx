@@ -2,14 +2,15 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Banknote, CheckCircle2, CreditCard, Receipt, ShoppingBag, Smartphone, Utensils } from "lucide-react";
+import { Banknote, CheckCircle2, CreditCard, Receipt, Search, ShoppingBag, Smartphone, Utensils } from "lucide-react";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { OfflineBanner, useOnline, useToast } from "@/components/ui/toast";
 import { useOfflineQueue } from "@/lib/offline-queue";
 import { formatMoney } from "@/lib/money";
+import { matchesQuery, menuFamilyFromName, MENU_FAMILY_LABELS, MENU_FAMILY_ORDER, type MenuFamily } from "@/lib/menu-taxonomy";
 import { closeDayAction } from "@/lib/till-actions";
 import { summarizePaid } from "@/lib/order-store-shared";
-import { PAYMENT_METHOD_LABELS, type Order, type PaymentMethod } from "@/types";
+import { ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS, type Order, type OrderStatus, type PaymentMethod } from "@/types";
 import { cn } from "@/lib/utils";
 import { useOrdersFeed } from "./use-orders-feed";
 
@@ -17,6 +18,12 @@ const METHODS: { method: PaymentMethod; icon: typeof CreditCard; tone: string }[
   { method: "card", icon: CreditCard, tone: "bg-[var(--metric-card-payment)]" },
   { method: "cash", icon: Banknote, tone: "bg-[var(--metric-cash-payment)]" },
   { method: "twint", icon: Smartphone, tone: "bg-foreground" },
+];
+
+const TILL_LANES: { status: OrderStatus[]; label: string }[] = [
+  { status: ["served"], label: "Tables servies" },
+  { status: ["ready"], label: "Prêtes, pas encore servies" },
+  { status: ["sent", "open"], label: "Encore en cuisine" },
 ];
 
 export function Till({
@@ -40,15 +47,41 @@ export function Till({
   const online = useOnline();
   const [selectedId, setSelectedId] = useState<string | null>(preselectOrderId);
   const [justPaid, setJustPaid] = useState<Order | null>(null);
+  const [query, setQuery] = useState("");
 
   const payable = useMemo(
     () => [...active].sort((a, b) => (a.status === "served" ? -1 : 1) - (b.status === "served" ? -1 : 1)),
     [active]
   );
-  // No explicit choice → the first payable order is selected, unless we're
-  // showing the "just paid" confirmation.
-  const effectiveId = selectedId ?? (!justPaid && payable.length > 0 ? payable[0].id : null);
+  const filteredPayable = useMemo(() => {
+    const q = query.trim();
+    if (!q) return payable;
+    return payable.filter(
+      (o) =>
+        matchesQuery(String(o.number), q) ||
+        matchesQuery(o.tableLabel ?? "", q) ||
+        matchesQuery(o.kind === "takeaway" ? "emporter" : "table", q) ||
+        o.items.some((i) => matchesQuery(i.name, q))
+    );
+  }, [payable, query]);
+
+  const effectiveId = selectedId ?? (!justPaid && filteredPayable.length > 0 ? filteredPayable[0].id : null);
   const selected = payable.find((o) => o.id === effectiveId) ?? null;
+  const ticketGroups = useMemo(() => {
+    if (!selected) return [];
+    const buckets = new Map<MenuFamily, typeof selected.items>();
+    for (const item of selected.items) {
+      const family = menuFamilyFromName(item.name);
+      const list = buckets.get(family) ?? [];
+      list.push(item);
+      buckets.set(family, list);
+    }
+    return MENU_FAMILY_ORDER.filter((f) => buckets.has(f)).map((family) => ({
+      family,
+      label: MENU_FAMILY_LABELS[family],
+      items: buckets.get(family)!,
+    }));
+  }, [selected]);
 
   const pay = async (order: Order, method: PaymentMethod) => {
     const paid: Order = { ...order, status: "paid", paymentMethod: method, paidAt: new Date().toISOString() };
@@ -73,40 +106,63 @@ export function Till({
     <div className="flex flex-col gap-5">
       <OfflineBanner pending={pending} />
       <div className="flex flex-col gap-5 lg:flex-row">
-        {/* Orders to collect */}
         <section className="flex w-full flex-col gap-2 lg:w-80 lg:shrink-0">
           <h1 className="text-[17px] font-bold tracking-tight text-foreground">À encaisser ({payable.length})</h1>
+          <label className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Table, n° ticket, plat…"
+              className="min-h-10 w-full rounded-md border border-border bg-card pl-9 pr-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-accent/40"
+            />
+          </label>
           {payable.length === 0 && (
             <p className="rounded-lg border border-border bg-card p-6 text-center text-sm text-muted-foreground shadow-sm">
               Toutes les commandes sont encaissées.
             </p>
           )}
-          {payable.map((order) => (
-            <button
-              key={order.id}
-              type="button"
-              onClick={() => {
-                setSelectedId(order.id);
-                setJustPaid(null);
-              }}
-              className={cn(
-                "flex min-h-12 items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5 text-left shadow-sm",
-                effectiveId === order.id ? "border-accent" : "border-transparent"
-              )}
-            >
-              <span className="flex items-center gap-2">
-                <span className="text-[17px] font-bold tracking-tight tabular-nums">n° {order.number}</span>
-                <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                  {order.kind === "takeaway" ? <ShoppingBag className="h-4 w-4" /> : <Utensils className="h-4 w-4" />}
-                  {order.kind === "takeaway" ? "Emporter" : order.tableLabel ? `T. ${order.tableLabel}` : "Table"}
-                </span>
-              </span>
-              <span className="text-lg font-bold tabular-nums">{formatMoney(order.total, currency)}</span>
-            </button>
-          ))}
+          {TILL_LANES.map((lane) => {
+            const orders = filteredPayable.filter((o) => lane.status.includes(o.status));
+            if (orders.length === 0) return null;
+            return (
+              <div key={lane.label}>
+                <p className="mb-1.5 mt-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">
+                  {lane.label} · {orders.length}
+                </p>
+                <div className="flex flex-col gap-2">
+                  {orders.map((order) => (
+                    <button
+                      key={order.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedId(order.id);
+                        setJustPaid(null);
+                      }}
+                      className={cn(
+                        "flex min-h-12 items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5 text-left shadow-sm",
+                        effectiveId === order.id ? "border-accent" : "border-transparent"
+                      )}
+                    >
+                      <span className="flex min-w-0 flex-col">
+                        <span className="flex items-center gap-2">
+                          <span className="text-[17px] font-bold tracking-tight tabular-nums">n° {order.number}</span>
+                          <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                            {order.kind === "takeaway" ? <ShoppingBag className="h-4 w-4" /> : <Utensils className="h-4 w-4" />}
+                            {order.kind === "takeaway" ? "Emporter" : order.tableLabel ? `T. ${order.tableLabel}` : "Table"}
+                          </span>
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">{ORDER_STATUS_LABELS[order.status]}</span>
+                      </span>
+                      <span className="text-lg font-bold tabular-nums">{formatMoney(order.total, currency)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </section>
 
-        {/* Payment panel */}
         <section className="flex-1">
           {justPaid && !selected ? (
             <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-card p-5 text-center shadow-sm">
@@ -144,16 +200,25 @@ export function Till({
                   {selected.kind === "takeaway" ? "À emporter" : selected.tableLabel ? `Table ${selected.tableLabel}` : "Table"}
                 </span>
               </header>
-              <ul className="my-4 divide-y divide-border">
-                {selected.items.map((item) => (
-                  <li key={item.id} className="flex justify-between py-2 text-base">
-                    <span>
-                      <span className="font-semibold">{item.quantity}×</span> {item.name}
-                    </span>
-                    <span className="tabular-nums">{formatMoney(item.unitPrice * item.quantity, currency)}</span>
-                  </li>
+              <div className="my-4 space-y-3">
+                {ticketGroups.map((group) => (
+                  <div key={group.family}>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">
+                      {group.label}
+                    </p>
+                    <ul className="divide-y divide-border">
+                      {group.items.map((item) => (
+                        <li key={item.id} className="flex justify-between py-2 text-base">
+                          <span>
+                            <span className="font-semibold">{item.quantity}×</span> {item.name}
+                          </span>
+                          <span className="tabular-nums">{formatMoney(item.unitPrice * item.quantity, currency)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
               <p className="flex items-center justify-between text-[22px] font-bold tracking-tight">
                 <span>Total</span>
                 <span className="tabular-nums">{formatMoney(selected.total, currency)}</span>
@@ -182,7 +247,6 @@ export function Till({
             </div>
           )}
 
-          {/* Day summary */}
           <div className="mt-4 rounded-lg border border-border bg-card p-4">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>

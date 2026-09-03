@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Minus, Plus, Send, ShoppingBag, Trash2, Utensils } from "lucide-react";
+import { Minus, Plus, Search, Send, ShoppingBag, Trash2, Utensils } from "lucide-react";
 import { OfflineBanner, useOnline, useToast } from "@/components/ui/toast";
 import { newClientId, useOfflineQueue } from "@/lib/offline-queue";
 import { formatMoney } from "@/lib/money";
-import { MENU_CATEGORY_LABELS, MENU_CATEGORY_ORDER, type MenuCategory, type MenuItem, type Order, type OrderKind } from "@/types";
+import { familiesPresent, groupMenuByFamily, matchesQuery, menuFamily, MENU_FAMILY_LABELS, type MenuFamily } from "@/lib/menu-taxonomy";
+import { type MenuItem, type Order, type OrderKind } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface CartLine {
@@ -34,11 +35,9 @@ export function OrderComposer({
   const online = useOnline();
   const { pending, enqueue } = useOfflineQueue(`orders.${siteId}`);
 
-  const categories = useMemo(
-    () => MENU_CATEGORY_ORDER.filter((c) => menu.some((m) => m.category === c)),
-    [menu]
-  );
-  const [category, setCategory] = useState<MenuCategory>(categories[0] ?? "salee");
+  const families = useMemo(() => familiesPresent(menu), [menu]);
+  const [family, setFamily] = useState<MenuFamily | "all">(families[0] ?? "all");
+  const [query, setQuery] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [kind, setKind] = useState<OrderKind>(appendTo?.kind ?? "table");
   const [tableLabel, setTableLabel] = useState(appendTo?.tableLabel ?? "");
@@ -89,7 +88,13 @@ export function OrderComposer({
     router.push(`/s/${siteId}/service`);
   };
 
-  const visible = menu.filter((m) => m.category === category);
+  const visible = useMemo(() => {
+    const searched = menu.filter((m) => matchesQuery(m.name, query));
+    if (query.trim()) return searched;
+    if (family === "all") return searched;
+    return searched.filter((m) => menuFamily(m) === family);
+  }, [menu, query, family]);
+  const grouped = useMemo(() => groupMenuByFamily(visible), [visible]);
   const quantityByItem = new Map<string, number>();
   for (const line of cart) quantityByItem.set(line.menuItemId, (quantityByItem.get(line.menuItemId) ?? 0) + line.quantity);
 
@@ -103,18 +108,40 @@ export function OrderComposer({
             {appendTo ? `Ajouter à la commande n° ${appendTo.number}` : "Nouvelle commande"}
           </h1>
         </div>
+        <label className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Chercher un plat, une boisson…"
+            className="min-h-11 w-full rounded-md border border-border bg-card pl-10 pr-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-accent/40"
+          />
+        </label>
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {categories.map((c) => (
+          <button
+            type="button"
+            onClick={() => setFamily("all")}
+            className={cn(
+              "min-h-9 shrink-0 rounded-md px-3.5 text-[13px] font-semibold transition-colors",
+              family === "all" && !query.trim() ? "bg-foreground text-background" : "border border-border bg-card text-foreground hover:bg-muted"
+            )}
+          >
+            Toute la carte
+          </button>
+          {families.map((c) => (
             <button
               key={c}
               type="button"
-              onClick={() => setCategory(c)}
+              onClick={() => {
+                setFamily(c);
+                setQuery("");
+              }}
               className={cn(
                 "min-h-9 shrink-0 rounded-md px-3.5 text-[13px] font-semibold transition-colors",
-                category === c ? "bg-foreground text-background" : "border border-border bg-card text-foreground hover:bg-muted"
+                family === c && !query.trim() ? "bg-foreground text-background" : "border border-border bg-card text-foreground hover:bg-muted"
               )}
             >
-              {MENU_CATEGORY_LABELS[c]}
+              {MENU_FAMILY_LABELS[c]}
             </button>
           ))}
         </div>
@@ -122,30 +149,46 @@ export function OrderComposer({
           <p className="rounded-lg border border-border bg-card p-5 text-center text-[13px] text-muted-foreground">
             La carte est vide. La direction peut ajouter des produits depuis « Menu ».
           </p>
+        ) : visible.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border bg-card p-5 text-center text-[13px] text-muted-foreground">
+            Aucun produit pour cette recherche.
+          </p>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-            {visible.map((item) => {
-              const qty = quantityByItem.get(item.id) ?? 0;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => add(item)}
-                  className={cn(
-                    "relative flex min-h-16 flex-col items-start justify-between rounded-lg border border-border bg-card p-2.5 text-left lg:min-h-20 shadow-sm transition-transform active:scale-[0.96] select-none touch-manipulation",
-                    qty > 0 ? "border-accent" : "border-transparent hover:border-border"
-                  )}
-                >
-                  <span className="text-base font-semibold leading-tight text-foreground">{item.name}</span>
-                  <span className="text-sm font-medium text-muted-foreground">{formatMoney(item.price, currency)}</span>
-                  {qty > 0 && (
-                    <span className="absolute right-2 top-2 flex h-8 min-w-8 items-center justify-center rounded-md bg-accent px-2 text-base font-bold text-accent-foreground">
-                      {qty}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          <div className="flex flex-col gap-5 overflow-y-auto lg:min-h-0 lg:flex-1">
+            {grouped.map((group) => (
+              <section key={group.family}>
+                <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">
+                  {group.label}
+                  <span className="ml-2 font-mono tabular-nums">{group.items.length}</span>
+                </h2>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  {group.items.map((item) => {
+                    const qty = quantityByItem.get(item.id) ?? 0;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => add(item)}
+                        className={cn(
+                          "relative flex min-h-12 items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2.5 text-left shadow-sm transition-transform active:scale-[0.98] select-none touch-manipulation",
+                          qty > 0 ? "border-accent" : "border-border hover:bg-muted/50"
+                        )}
+                      >
+                        <span className="min-w-0 truncate text-[14px] font-semibold leading-tight text-foreground">{item.name}</span>
+                        <span className="shrink-0 text-[13px] font-medium tabular-nums text-muted-foreground">
+                          {formatMoney(item.price, currency)}
+                        </span>
+                        {qty > 0 && (
+                          <span className="absolute -right-1.5 -top-1.5 flex h-6 min-w-6 items-center justify-center rounded-md bg-accent px-1.5 text-[12px] font-bold text-accent-foreground">
+                            {qty}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
         )}
       </section>

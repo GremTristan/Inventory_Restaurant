@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AlertTriangle, Trash2 } from "lucide-react";
-import { AutoSaveForm, CreateForm, DeleteButton } from "@/components/direction/forms";
+import { CreateForm, DeleteButton } from "@/components/direction/forms";
+import { StockDirectory } from "@/components/direction/stock-directory";
 import { EmptyState, PageHeader, SiteTabs, Stat } from "@/components/direction/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +9,7 @@ import { Select } from "@/components/ui/select";
 import {
   addInventoryItemAction,
   addSupplierAction,
-  deleteInventoryItemAction,
   deleteSupplierAction,
-  updateInventoryItemAction,
 } from "@/lib/direction-actions";
 import { getInventoryBySite, getInventoryForTenant, getSuppliers, isLowStock } from "@/lib/inventory-store";
 import { formatMoney } from "@/lib/money";
@@ -32,7 +31,6 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
     getSuppliers(tenant.id),
     getInventoryForTenant(tenant.id),
   ]);
-  const supplierName = new Map(suppliers.map((s) => [s.id, s.name]));
   const value = (list: typeof all) => list.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
   const lowItems = (site ? items : all).filter(isLowStock);
 
@@ -194,73 +192,12 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
           {items.length === 0 ? (
             <EmptyState title="Aucun article pour cet établissement" description="Ajoutez vos matières premières : les cuisiniers pourront les compter depuis leur tablette." />
           ) : (
-            CATEGORY_ORDER.map((category) => {
-              const group = items.filter((i) => i.category === category);
-              if (group.length === 0) return null;
-              return (
-                <section key={category} className="mb-6">
-                  <h2 className="mb-2 text-base font-bold text-muted-foreground">
-                    {CATEGORY_LABELS[category]} · {formatMoney(value(group), tenant.currency)}
-                  </h2>
-                  <ul className="space-y-2">
-                    {group.map((item) => (
-                      <li key={item.id} className="rounded-lg border border-border bg-card p-3 shadow-sm">
-                        <AutoSaveForm action={updateInventoryItemAction} className="grid grid-cols-2 items-end gap-2 sm:grid-cols-3 lg:grid-cols-[1fr_6rem_7rem_7rem_10rem_8rem_auto]">
-                          <input type="hidden" name="id" value={item.id} />
-                          <label className="col-span-2 block text-xs text-muted-foreground sm:col-span-3 lg:col-span-1">
-                            <span className="flex items-center gap-1">
-                              Article {isLowStock(item) && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
-                            </span>
-                            <Input name="name" defaultValue={item.name} className="mt-0.5 min-h-11" />
-                          </label>
-                          <label className="block text-xs text-muted-foreground">
-                            Qté ({item.unit})
-                            <Input name="quantity" type="number" step="0.1" min="0" defaultValue={item.quantity} className="mt-0.5 min-h-11 tabular-nums" />
-                          </label>
-                          <label className="block text-xs text-muted-foreground">
-                            Prix d’achat
-                            <Input name="unitPrice" type="number" step="0.01" min="0" defaultValue={item.unitPrice.toFixed(2)} className="mt-0.5 min-h-11 tabular-nums" />
-                          </label>
-                          <label className="block text-xs text-muted-foreground">
-                            Seuil d’alerte
-                            <Input name="lowStockThreshold" type="number" step="0.1" min="0" defaultValue={item.lowStockThreshold ?? ""} placeholder="—" className="mt-0.5 min-h-11 tabular-nums" />
-                          </label>
-                          <label className="block text-xs text-muted-foreground">
-                            Fournisseur
-                            <Select name="supplierId" defaultValue={item.supplierId ?? ""} className="mt-0.5 min-h-11 w-full">
-                              <option value="">—</option>
-                              {suppliers.map((s) => (
-                                <option key={s.id} value={s.id}>
-                                  {s.name}
-                                </option>
-                              ))}
-                            </Select>
-                          </label>
-                          <label className="flex min-h-11 items-center gap-2 text-xs text-muted-foreground">
-                            <input type="hidden" name="visibleToServerField" value="1" />
-                            <input
-                              type="checkbox"
-                              name="visibleToServer"
-                              value="true"
-                              defaultChecked={item.visibleToServer}
-                              className="h-5 w-5 accent-[var(--accent)]"
-                            />
-                            Visible salle
-                          </label>
-                          <div className="flex items-center justify-end gap-2">
-                            <span className="text-sm font-semibold tabular-nums text-foreground">{formatMoney(item.quantity * item.unitPrice, tenant.currency)}</span>
-                            <DeleteButton action={deleteInventoryItemAction} fields={{ id: item.id }} message={`${item.name} supprimé`} variant="ghost" size="icon" aria-label="Supprimer" confirmLabel="Supprimer ?">
-                              <Trash2 className="h-5 w-5 text-destructive" />
-                            </DeleteButton>
-                          </div>
-                        </AutoSaveForm>
-                        {item.supplierId && <p className="mt-1 text-xs text-muted-foreground">Fournisseur : {supplierName.get(item.supplierId)}</p>}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              );
-            })
+            <StockDirectory
+              items={items}
+              suppliers={suppliers}
+              supplierName={Object.fromEntries(suppliers.map((s) => [s.id, s.name]))}
+              currency={tenant.currency}
+            />
           )}
         </>
       ) : null}
